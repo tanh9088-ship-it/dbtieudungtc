@@ -857,9 +857,17 @@ RENDERERS.satisfaction = function(){
       <div class="card" style="margin-top:18px"><h3>Sẵn sàng ngân hàng số</h3><div class="chart-box h-400"><canvas id="sa_o_dig"></canvas></div></div>
       <div class="grid grid-2" style="margin-top:18px">
         <div class="card"><h3>Quan tâm tài sản số</h3><div class="chart-box h-280"><canvas id="sa_o_crypto"></canvas></div></div>
-        <div class="card"><h3>Tỷ lệ không / rất không hài lòng</h3><div class="chart-box h-280"><canvas id="sa_o_unsat"></canvas></div></div>
+        <div class="card"><h3>Tỷ lệ không / rất không hài lòng (theo từng mặt)</h3><div class="chart-box h-280"><canvas id="sa_o_unsat"></canvas></div></div>
       </div>
-      <div class="insight teal" style="margin-top:16px"><b>Toàn mẫu:</b> Hài lòng + Rất hài lòng chiếm ~81%. Hoàn toàn sẵn sàng ngân hàng số ${S.overall.dig_ready}%. Tỷ lệ không hài lòng ${S.overall.unsat_pct}%.</div>
+      <div class="card" style="margin-top:18px">
+        <h3>Không hài lòng ít nhất 1 mặt — 10,3% (358 KH)</h3>
+        <div class="card-sub">Khách đánh giá "Không hài lòng" hoặc "Rất không hài lòng" về SP/DV <b>hoặc</b> CSKH (hoặc cả hai). N = ${u.n_total.toLocaleString('vi-VN')}</div>
+        <div class="grid grid-2">
+          <div class="chart-box h-280"><canvas id="sa_o_unsat_any"></canvas></div>
+          <div class="chart-box h-280"><canvas id="sa_o_unsat_brk"></canvas></div>
+        </div>
+      </div>
+      <div class="insight teal" style="margin-top:16px"><b>Toàn mẫu:</b> Hài lòng + Rất hài lòng chiếm ~81%. Hoàn toàn sẵn sàng ngân hàng số ${S.overall.dig_ready}%. <b>Không hài lòng ít nhất 1 mặt: ${u.pct_unsat}% (${u.n_unsat} KH)</b> — trong đó SP/DV ${u.n_unsat_product} KH, CSKH ${u.n_unsat_care} KH, chồng lấp cả 2 mặt ${u.n_overlap} KH.</div>
     </div>
 
     <div class="seg-view" id="sa-age">
@@ -933,14 +941,35 @@ RENDERERS.satisfaction = function(){
   });
   labeledBar('sa_o_dig', S.dig_labels, S.overall.digital, {max:Math.max(...S.overall.digital)*1.2});
   labeledBar('sa_o_crypto', S.crypto_labels, S.overall.crypto, {max:Math.max(...S.overall.crypto)*1.2});
+  // Per-dimension unsat rates
   new Chart(document.getElementById('sa_o_unsat'), {
     type:'bar',
-    data:{ labels:['Không / Rất không hài lòng'], datasets:[{ data:[S.overall.unsat_pct], backgroundColor:NEG, borderRadius:6, barPercentage:0.35 }]},
-    plugins:[{id:'vl', afterDatasetsDraw(ch){ const {ctx}=ch; ctx.save(); ctx.fillStyle=dataLabelColor; ctx.font='700 16px sans-serif'; ctx.textAlign='center';
-      const m=ch.getDatasetMeta(0).data[0]; ctx.fillText(S.overall.unsat_pct+'%', m.x, m.y-8); ctx.restore(); }}],
-    options:{ responsive:true, maintainAspectRatio:false, plugins:{legend:{display:false}},
-      scales:{x:{grid:{display:false}}, y:{grid:{color:'#EEF3F2'}, beginAtZero:true, max:25}} }
+    data:{ labels:['SP/DV','CSKH'], datasets:[{
+      data:[ +(u.n_unsat_product/u.n_total*100).toFixed(1), +(u.n_unsat_care/u.n_total*100).toFixed(1) ],
+      backgroundColor:[NEG, '#D9906F'], borderRadius:6, barPercentage:0.55
+    }]},
+    plugins:[{id:'vl', afterDatasetsDraw(ch){ const {ctx}=ch; ctx.save(); ctx.fillStyle=dataLabelColor; ctx.font='700 12px sans-serif'; ctx.textAlign='center';
+      ch.getDatasetMeta(0).data.forEach((bar,i)=>{ const v=ch.data.datasets[0].data[i]; ctx.fillText(v+'%', bar.x, bar.y-6); });
+      ctx.restore(); }}],
+    options:{ responsive:true, maintainAspectRatio:false, plugins:{legend:{display:false},
+      tooltip:{callbacks:{label:(c)=>c.raw+'%'}}},
+      scales:{x:{grid:{display:false}}, y:{grid:{color:'#EEF3F2'}, beginAtZero:true, max:15}} }
   });
+
+  // Donut: hài lòng vs không hài lòng ít nhất 1 mặt
+  const nOk = u.n_total - u.n_unsat;
+  donutChart('sa_o_unsat_any',
+    ['Không HL ≥1 mặt ('+u.n_unsat+' KH)','Còn lại ('+nOk.toLocaleString('vi-VN')+' KH)'],
+    [u.pct_unsat, +(100-u.pct_unsat).toFixed(1)],
+    {colors:[NEG, TEAL], asPct:true});
+
+  // Breakdown: only product / only care / both
+  const onlyProd = u.n_unsat_product - u.n_overlap;
+  const onlyCare = u.n_unsat_care - u.n_overlap;
+  labeledBar('sa_o_unsat_brk',
+    ['Chỉ SP/DV','Chỉ CSKH','Cả 2 mặt','Tổng ≥1 mặt'],
+    [onlyProd, onlyCare, u.n_overlap, u.n_unsat],
+    {absolute:true, colors:[NEG,'#D9906F',GOLD,TEAL], max: u.n_unsat*1.2, yFontSize:11});
 
   // Unsat profile (fixed)
   compareBar('s_u_age', u.age.labels, u.age.all, u.age.seg, 'Toàn mẫu', 'Không hài lòng');
