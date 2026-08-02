@@ -337,9 +337,9 @@ const TABS = [
   {id:'overview', label:'Tổng quan'},
   {id:'demo', label:'Nhân khẩu học'},
   {id:'products', label:'Sản phẩm & Kênh'},
-  {id:'satisfaction', label:'Mức độ Hài lòng & Chấp nhận số'},
+  {id:'satisfaction', label:'Hài lòng & Chấp nhận số'},
   {id:'segments', label:'Phân khúc khách hàng'},
-  {id:'trends', label:'Xu hướng & Ý kiến khách hàng'},
+  {id:'trends', label:'Xu hướng & Ý kiến KH'},
 ];
 const initedTabs = new Set();
 
@@ -747,7 +747,7 @@ RENDERERS.products = function(){
   const el = document.getElementById('panel-products');
   const P = DATA.cross_prod;
   el.innerHTML = `
-    <div class="section-title"><span class="bar"></span>Sản phẩm & kênh theo giai đoạn vòng đời</div>
+    <div class="section-title"><span class="bar"></span>Sản phẩm & kênh thu thập thông tin</div>
     <div class="section-desc">Sử dụng sản phẩm (tích cực), ưu tiên chọn NH, yếu tố chọn SP, nguồn thông tin & hình thức tư vấn — lọc theo <b>Toàn mẫu</b>, nhóm tuổi, hôn nhân, thu nhập, số con.</div>
     <div class="seg-toggle">
       <button class="seg-btn active" data-pr="overall">Toàn mẫu</button>
@@ -873,7 +873,7 @@ RENDERERS.satisfaction = function(){
   const u = DATA.unsat;
   const S = DATA.cross_sat;
   el.innerHTML = `
-    <div class="section-title"><span class="bar"></span>Hài lòng & rủi ro theo giai đoạn vòng đời</div>
+    <div class="section-title"><span class="bar"></span>Hài lòng & Chấp nhận số, tài sản số </div>
     <div class="section-desc">Mức hài lòng SP/DV & CSKH, sẵn sàng ngân hàng số và quan tâm tài sản số — lọc theo <b>Toàn mẫu</b>, nhóm tuổi, hôn nhân, thu nhập, số con.</div>
     <div class="seg-toggle">
       <button class="seg-btn active" data-sa="overall">Toàn mẫu</button>
@@ -1088,7 +1088,7 @@ RENDERERS.satisfaction = function(){
 RENDERERS.segments = function(){
   const el = document.getElementById('panel-segments');
   el.innerHTML = `
-    <div class="section-title"><span class="bar"></span>Khác biệt theo giai đoạn vòng đời tài chính</div>
+    <div class="section-title"><span class="bar"></span>Khác biệt theo đặc điểm khách hàng</div>
     <div class="section-desc">So sánh hành vi khách hàng theo nhóm tuổi, tình trạng hôn nhân, mức thu nhập, số lượng con cái — và đối chiếu với <b>toàn mẫu</b>.</div>
     <div class="seg-toggle">
       <button class="seg-btn active" data-seg="overall">Toàn mẫu</button>
@@ -1278,7 +1278,7 @@ RENDERERS.trends = function(){
   const el = document.getElementById('panel-trends');
   const T = DATA.cross_trends;
   el.innerHTML = `
-    <div class="section-title"><span class="bar"></span>Xu hướng & cải thiện theo giai đoạn vòng đời</div>
+    <div class="section-title"><span class="bar"></span>Xu hướng & Ý kiến của khách hàng</div>
     <div class="section-desc">Kế hoạch tài chính, hiểu biết TC và mong muốn cải thiện — lọc theo <b>Toàn mẫu</b>, nhóm tuổi, hôn nhân, thu nhập, số con (cùng cấu trúc tab Phân khúc).</div>
     <div class="seg-toggle">
       <button class="seg-btn active" data-tr="overall">Toàn mẫu</button>
