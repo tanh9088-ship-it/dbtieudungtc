@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Dashboard Khảo sát Khách hàng Tài chính</title>
+<title>Dashboard Khảo sát người tiêu dùng Tài chính</title>
 <script>
 /*!
  * Chart.js v4.4.4
@@ -211,9 +211,40 @@ table.mini tr:nth-child(even) td{background:var(--gold-tint);}
   display:inline-block; background:var(--teal-tint); color:var(--teal-dark);
   font-size:10.5px; font-weight:700; padding:3px 9px; border-radius:999px; margin-left:8px;
 }
+
+/* Password lock overlay */
+#lock-screen{position:fixed;inset:0;z-index:99999;background:linear-gradient(160deg,#006B68 0%,#0a3d3b 55%,#132625 100%);
+  display:flex;align-items:center;justify-content:center;font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif;}
+#lock-screen.hidden{display:none;}
+.lock-box{background:#fff;border-radius:16px;padding:36px 40px;width:min(380px,92vw);box-shadow:0 20px 60px rgba(0,0,0,.35);text-align:center;}
+.lock-box .logo-dot{width:48px;height:48px;border-radius:12px;background:linear-gradient(135deg,#FFC62F,#006B68);margin:0 auto 16px;display:flex;align-items:center;justify-content:center;}
+.lock-box .logo-dot span{font-size:22px;font-weight:800;color:#fff;}
+.lock-box h2{margin:0 0 6px;font-size:18px;color:#132625;}
+.lock-box p{margin:0 0 20px;font-size:13px;color:#5a6e6c;}
+.lock-box input{width:100%;box-sizing:border-box;padding:12px 14px;border:1.5px solid #d0dcd9;border-radius:10px;font-size:15px;outline:none;text-align:center;letter-spacing:3px;}
+.lock-box input:focus{border-color:#006B68;box-shadow:0 0 0 3px rgba(0,107,104,.15);}
+.lock-box button{margin-top:14px;width:100%;padding:12px;border:none;border-radius:10px;background:#006B68;color:#fff;font-size:14px;font-weight:700;cursor:pointer;}
+.lock-box button:hover{background:#008a86;}
+.lock-err{color:#c0392b;font-size:12.5px;margin-top:10px;min-height:18px;font-weight:600;}
+body.locked > *:not(#lock-screen){visibility:hidden !important;}
+
 </style>
 </head>
-<body>
+<body class="locked">
+
+<div id="lock-screen">
+  <div class="lock-box">
+    <div class="logo-dot"><span>B</span></div>
+    <h2>Dashboard Khảo sát người tiêu dùng tài chính</h2>
+    <p>Nhập mật khẩu để xem nội dung</p>
+    <form id="lock-form" autocomplete="off">
+      <input type="password" id="lock-pw" placeholder="••••••" autofocus maxlength="32" />
+      <button type="submit">Đăng nhập</button>
+      <div class="lock-err" id="lock-err"></div>
+    </form>
+  </div>
+</div>
+
 
 <header class="top">
   <div class="top-inner">
@@ -1360,6 +1391,38 @@ RENDERERS.trends = function(){
     });
   });
 };
+
+
+// ============ PASSWORD GATE ============
+(function(){
+  const PASS = '123456';
+  const KEY = 'bidv_dash_auth_v1';
+  const lock = document.getElementById('lock-screen');
+  const form = document.getElementById('lock-form');
+  const input = document.getElementById('lock-pw');
+  const err = document.getElementById('lock-err');
+  function unlock(){
+    if(lock) lock.classList.add('hidden');
+    document.body.classList.remove('locked');
+    try{ sessionStorage.setItem(KEY,'1'); }catch(e){}
+  }
+  try{
+    if(sessionStorage.getItem(KEY)==='1'){ unlock(); return; }
+  }catch(e){}
+  if(form){
+    form.addEventListener('submit', function(e){
+      e.preventDefault();
+      if((input.value||'') === PASS){
+        err.textContent = '';
+        unlock();
+      } else {
+        err.textContent = 'Mật khẩu không đúng. Vui lòng thử lại.';
+        input.value = '';
+        input.focus();
+      }
+    });
+  }
+})();
 
 // ============ INIT ============
 renderKPIs();
