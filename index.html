@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Dashboard Khảo sát người tiêu dùng Tài chính</title>
+<title>Dashboard Khảo sát người tiêu dùng Tài chính - Viện NCKT BIDV phối hợp Viện Tài chính Hana</title>
 <script>
 /*!
  * Chart.js v4.4.4
@@ -105,23 +105,37 @@ h1.title{
 /* ---------- TABS ---------- */
 nav.tabs{
   display:flex; gap:4px; margin-top:0;
-  background:var(--white);
+  background:linear-gradient(180deg, #f7faf9 0%, #eef5f4 100%);
   border-bottom:1px solid var(--border);
-  padding:0 28px;
+  padding:12px 28px 14px;
   position:sticky; top:0; z-index:50;
-  box-shadow:0 1px 0 rgba(0,0,0,0.02);
+  box-shadow:0 2px 8px rgba(0,107,104,0.06);
   overflow-x:auto;
 }
-.tabs-inner{display:flex; gap:2px; max-width:1320px; margin:0 auto; width:100%;}
+.tabs-inner{display:flex; gap:10px; max-width:1320px; margin:0 auto; width:100%; flex-wrap:wrap;}
 .tab-btn{
-  border:none; background:none; cursor:pointer;
-  font-size:13.5px; font-weight:600; color:var(--grey);
-  padding:16px 18px 14px; white-space:nowrap;
-  border-bottom:3px solid transparent;
-  transition:color .15s ease, border-color .15s ease;
+  border:1.5px solid #d5e3e1; background:#fff; cursor:pointer;
+  font-size:13.5px; font-weight:700; color:#4a5c5a;
+  padding:11px 18px; white-space:nowrap; border-radius:12px;
+  box-shadow:0 2px 0 #c5d5d3, 0 3px 8px rgba(0,0,0,0.06);
+  transition:all .18s ease;
+  position:relative; top:0;
 }
-.tab-btn:hover{color:var(--teal);}
-.tab-btn.active{color:var(--teal); border-bottom-color:var(--gold);}
+.tab-btn:hover{
+  color:var(--teal); border-color:var(--teal);
+  box-shadow:0 3px 0 #a8c4c2, 0 6px 14px rgba(0,107,104,0.12);
+  transform:translateY(-1px);
+}
+.tab-btn.active{
+  color:#fff; background:linear-gradient(180deg, #008a86 0%, #006B68 100%);
+  border-color:#005a57;
+  box-shadow:0 3px 0 #004844, 0 6px 16px rgba(0,107,104,0.28);
+  transform:translateY(-1px);
+}
+.tab-btn.active::after{
+  content:''; position:absolute; left:50%; bottom:-9px; transform:translateX(-50%);
+  border:6px solid transparent; border-top-color:#006B68;
+}
 
 /* ---------- CONTENT ---------- */
 section.panel{display:none; padding-top:28px; animation:fadein .25s ease;}
@@ -268,10 +282,10 @@ body.locked > *:not(#lock-screen){visibility:hidden !important;}
   <section class="panel" id="panel-trends"></section>
 
   <footer class="foot">
-    Dashboard được xây dựng từ kết quả khảo sát khách hàng · Đây là sản phẩm nghiên cứu hợp tác giữa Viện NCKT BIDV và Viện Nghiên cứu tài chính Hana
+    Dashboard được xây dựng từ kết quả khảo sát khách hàng · Đây là sản phẩm nghiên cứu hợp tác giữa Viện NCKT BIDV và Viện Tài chính Hana
 
 <script>
-const DATA = {"N": 3470, "multi_bank": {"overall_pct": 65.3, "n_other": 2265, "n_only_bidv": 1205, "age": {"labels": ["≤25", "26-35", "36-45", "46-55", "≥56"], "values": [67.1, 70.9, 65.3, 57.5, 46.3], "n": [438, 1107, 1272, 478, 175]}, "marital": {"labels": ["Chưa kết hôn", "Đang hôn nhân", "Đã từng KH"], "values": [68.8, 64.6, 60.7], "n": [837, 2343, 290]}, "income": {"labels": ["<25tr", "25-45tr", "50-100tr", "100-200tr", ">200tr"], "values": [60.3, 67.6, 77.3, 78.3, 69.7], "n": [1880, 936, 383, 152, 119]}, "children": {"labels": ["Chưa có", "1 con", "2 con", "≥3 con"], "values": [69.6, 68.3, 61.8, 62.8], "n": [945, 666, 1558, 301]}, "banks": {"labels": ["Vietcombank", "MB", "Vietinbank", "Techcombank", "VPBank"], "values": [1042, 787, 699, 412, 245]}}, "kpi": {"N": 3470, "satisfaction_pct": 81.0, "digital_ready_pct": 59.9, "multibank_pct": 65.3, "age_mean": 37.2, "unsat_pct": 10.3, "unsat_n": 358}, "age": {"labels": ["Dưới 18", "18-25", "26-35", "36-45", "46-55", "56-65", "Trên 65"], "values": [43, 395, 1107, 1272, 478, 136, 39]}, "income": {"labels": ["<25tr", "25-45tr", "50-100tr", "100-200tr", ">200tr"], "values": [1880, 936, 383, 152, 119]}, "marital": {"labels": ["Chưa kết hôn", "Đang trong hôn nhân", "Đã từng kết hôn"], "values": [837, 2343, 290]}, "education": {"labels": ["THPT-CĐ", "Đại học", "Sau ĐH"], "values": [711, 2046, 713]}, "province": {"provinces": [{"name": "Hà Nội", "count": 394, "region": "Miền Bắc", "pct": 11.4}, {"name": "Hồ Chí Minh", "count": 377, "region": "Miền Nam", "pct": 10.9}, {"name": "Nghệ An", "count": 300, "region": "Miền Trung", "pct": 8.6}, {"name": "Đồng Tháp", "count": 251, "region": "Miền Nam", "pct": 7.2}, {"name": "Đà Nẵng", "count": 232, "region": "Miền Trung", "pct": 6.7}, {"name": "Vĩnh Long", "count": 225, "region": "Miền Nam", "pct": 6.5}, {"name": "Tây Ninh", "count": 219, "region": "Miền Nam", "pct": 6.3}, {"name": "Sơn La", "count": 203, "region": "Miền Bắc", "pct": 5.9}, {"name": "Phú Thọ", "count": 199, "region": "Miền Bắc", "pct": 5.7}, {"name": "Quảng Trị", "count": 177, "region": "Miền Trung", "pct": 5.1}, {"name": "Huế", "count": 173, "region": "Miền Trung", "pct": 5.0}, {"name": "An Giang", "count": 156, "region": "Miền Nam", "pct": 4.5}, {"name": "Quảng Ngãi", "count": 114, "region": "Miền Trung", "pct": 3.3}, {"name": "Cần Thơ", "count": 101, "region": "Miền Nam", "pct": 2.9}, {"name": "Hưng Yên", "count": 74, "region": "Miền Bắc", "pct": 2.1}, {"name": "Hải Phòng", "count": 73, "region": "Miền Bắc", "pct": 2.1}, {"name": "Thái Nguyên", "count": 52, "region": "Miền Bắc", "pct": 1.5}, {"name": "Thanh Hóa", "count": 35, "region": "Miền Bắc", "pct": 1.0}, {"name": "Lạng Sơn", "count": 31, "region": "Miền Bắc", "pct": 0.9}, {"name": "Quảng Ninh", "count": 24, "region": "Miền Bắc", "pct": 0.7}, {"name": "Ninh Bình", "count": 15, "region": "Miền Bắc", "pct": 0.4}, {"name": "Lào Cai", "count": 14, "region": "Miền Bắc", "pct": 0.4}, {"name": "Khánh Hòa", "count": 9, "region": "Miền Trung", "pct": 0.3}, {"name": "Đắk Lắk", "count": 9, "region": "Miền Trung", "pct": 0.3}, {"name": "Gia Lai", "count": 8, "region": "Miền Trung", "pct": 0.2}, {"name": "Bắc Ninh", "count": 3, "region": "Miền Bắc", "pct": 0.1}, {"name": "Đồng Nai", "count": 2, "region": "Miền Nam", "pct": 0.1}], "regions": {"labels": ["Miền Bắc", "Miền Trung", "Miền Nam"], "values": [1117, 1022, 1331], "pct": [32.2, 29.5, 38.4]}, "labels": ["Hà Nội", "Hồ Chí Minh", "Nghệ An", "Đồng Tháp", "Đà Nẵng", "Vĩnh Long", "Tây Ninh", "Sơn La", "Phú Thọ", "Quảng Trị", "Huế", "An Giang", "Quảng Ngãi", "Cần Thơ", "Hưng Yên", "Hải Phòng", "Thái Nguyên", "Thanh Hóa", "Lạng Sơn", "Quảng Ninh", "Ninh Bình", "Lào Cai", "Khánh Hòa", "Đắk Lắk", "Gia Lai", "Bắc Ninh", "Đồng Nai"], "values": [394, 377, 300, 251, 232, 225, 219, 203, 199, 177, 173, 156, 114, 101, 74, 73, 52, 35, 31, 24, 15, 14, 9, 9, 8, 3, 2]}, "region": {"labels": ["Miền Bắc", "Miền Trung", "Miền Nam"], "values": [1117, 1022, 1331]}, "occupation": {"labels": ["Chuyên viên, kỹ thuật viên", "Kinh doanh tự do", "Quản lý", "Sinh viên", "Chuyên gia", "Nội trợ"], "values": [1035, 891, 536, 170, 127, 110]}, "children": {"labels": ["Chưa có", "1 con", "2 con", "3 con trở lên"], "values": [945, 666, 1558, 301]}, "products": {"labels": ["TK thanh toán", "Tiền gửi VND", "Thẻ tín dụng", "Thẻ ghi nợ", "Vay thế chấp", "BH sức khỏe", "BH nhân thọ", "Vay tín chấp", "Cổ phiếu", "Vàng, bạc", "Quỹ đầu tư", "Tiền gửi ngoại tệ", "Trái phiếu", "Tài sản số"], "active": [95.9, 80.1, 56.5, 48.7, 45.2, 39.8, 37.5, 34.9, 22.3, 21.6, 20.1, 19.9, 16.6, 16.5], "frequent": [83.0, 45.0, 35.6, 27.2, 29.2, 22.1, 20.8, 22.2, 10.8, 9.0, 8.8, 8.8, 7.1, 7.8]}, "priority_bank": {"labels": ["Ngân hàng có uy tín cao trên thị trường", "Thao tác trên ứng dụng thuận tiện", "Dịch vụ có nhiều ưu đãi, lãi suất tốt", "Cán bộ giao dịch thân thiện", "Chi nhánh dễ tìm"], "values": [58.8, 58.8, 57.4, 57.0, 46.0]}, "product_choice_factor": {"labels": ["An toàn cao, bảo mật tốt", "Lãi suất và phí cạnh tranh", "Chăm sóc khách hàng tốt", "Dễ hiểu và dễ sử dụng", "Khuyến mãi/ưu đãi nhiều"], "values": [78.0, 74.2, 55.4, 47.4, 23.1]}, "info_source": {"labels": ["Trang web/ứng dụng của ngân hàng", "Nhân viên tư vấn", "Gia đình/bạn bè", "Báo chí/truyền hình", "Tham khảo mạng Tiktok/Youtube/Facebook"], "values": [66.3, 60.3, 60.0, 30.2, 27.9]}, "improvement_wish": {"labels": ["Gia tăng ưu đãi khách hàng theo quy mô giao dịch", "Chăm sóc khách hàng tốt (nhắc nợ tự động hiệu quả, phản hồi thông tin nhanh chóng…)", "Nhiều sản phẩm đa dạng, hấp dẫn hơn", "Thông báo sản phẩm/dịch vụ dễ hiểu hơn", "Tăng dịch vụ khác (phòng chờ sân bay, voucher nhãn hàng khác…)", "Tăng thêm các sự kiện/hoạt động thú vị, hấp dẫn cho khách hàng", "Ưu đãi liên kết sản phẩm trong hệ sinh thái nhiều hơn (chứng khoán, bảo hiểm…)", "Cung cấp thêm thông tin kinh tế/tài chính cho khách hàng tham khảo"], "values": [49.0, 45.5, 41.9, 28.2, 26.6, 23.5, 19.2, 18.0]}, "financial_goal": {"labels": ["Mua nhà", "Đầu tư tài chính", "Khởi nghiệp/kinh doanh", "Trả nợ", "Chưa có kế hoạch cụ thể", "Đầu tư du học/giáo dục", "Nghỉ hưu"], "values": [47.6, 35.9, 27.8, 24.3, 19.3, 17.9, 8.8]}, "satisfaction": {"labels": ["Rất không hài lòng", "Không hài lòng", "Bình thường", "Hài lòng", "Rất hài lòng"], "product": [9.3, 0.3, 9.5, 35.1, 45.9], "care": [8.0, 0.3, 11.6, 34.8, 45.4]}, "digital_readiness": {"labels": ["Tuyệt đối không", "Không muốn sử dụng", "Phân vân", "Có thể sử dụng", "Hoàn toàn sẵn sàng"], "values": [1.1, 3.1, 8.1, 27.9, 59.9]}, "crypto": {"labels": ["Không quan tâm", "Ít quan tâm", "Bình thường", "Quan tâm", "Rất quan tâm"], "values": [15.4, 16.0, 26.5, 19.9, 22.2]}, "self_literacy": {"labels": ["Rất thấp", "Thấp", "Trung bình", "Cao", "Rất cao"], "values": [1.4, 4.6, 49.0, 28.5, 16.6]}, "advisory": {"labels": ["Chưa từng", "Đã từng/dừng", "Hiếm khi", "Thỉnh thoảng", "Thường xuyên"], "values": [16.5, 4.1, 23.1, 37.3, 18.9]}, "advisory_pref": {"labels": ["Gặp trực tiếp", "Nhắn tin/Chat với tư vấn viên", "Gọi điện/gọi hình ảnh", "Không cần tư vấn", "Hỗ trợ bằng AI/robo-advisor"], "values": [59.9, 16.5, 12.0, 7.9, 3.7]}, "unsat": {"n_total": 3470, "n_unsat": 358, "pct_unsat": 10.3, "n_unsat_product": 332, "n_unsat_care": 286, "n_overlap": 260, "age_mean_all": 37.2, "age_mean_seg": 38.1, "age": {"labels": ["Dưới 18", "18-25", "26-35", "36-45", "46-55", "56-65", "Trên 65"], "all": [1.2, 11.4, 31.9, 36.7, 13.8, 3.9, 1.1], "seg": [2.2, 7.8, 29.6, 39.9, 15.4, 4.7, 0.3]}, "income": {"labels": ["<25tr", "25-45tr", "50-100tr", "100-200tr", ">200tr"], "all": [54.2, 27.0, 11.0, 4.4, 3.4], "seg": [50.6, 24.9, 10.3, 6.7, 7.5]}, "marital": {"labels": ["Chưa kết hôn", "Đang trong hôn nhân", "Đã từng kết hôn"], "all": [24.1, 67.5, 8.4], "seg": [17.9, 70.1, 12.0]}, "digital": {"labels": ["Tuyệt đối\nkhông", "Không\nmuốn", "Phân vân", "Có thể", "Hoàn toàn\nsẵn sàng"], "all": [1.1, 3.1, 8.1, 27.9, 59.9], "seg": [1.7, 3.4, 5.9, 21.2, 67.9]}}, "cross_marital_products": {"labels": ["TK toán", "Thẻ TD", "Vay thế chấp", "Vay tín chấp", "BH nhân thọ", "BH sức khỏe"], "series": {"Chưa kết hôn": [93.5, 46.5, 25.7, 23.4, 25.7, 31.1], "Đang trong hôn nhân": [96.8, 59.8, 51.7, 39.0, 41.0, 42.3], "Đã từng kết hôn": [95.2, 58.6, 49.3, 35.5, 43.1, 44.1]}}, "cross_marital_goal": {"labels": ["Mua nhà", "Đầu tư tài chính", "Khởi nghiệp/kinh doanh", "Trả nợ", "Nghỉ hưu", "Đầu tư du học/giáo dục"], "series": {"Chưa kết hôn": [48.4, 36.9, 37.2, 13.0, 5.0, 23.8], "Đang trong hôn nhân": [47.4, 35.8, 24.8, 28.1, 10.0, 16.0], "Đã từng kết hôn": [47.6, 34.1, 24.1, 25.9, 10.3, 16.2]}}, "cross_children_goal": {"labels": ["Mua nhà", "Đầu tư tài chính", "Khởi nghiệp/kinh doanh", "Trả nợ", "Nghỉ hưu", "Đầu tư du học/giáo dục"], "series": {"Chưa có": [50.2, 37.5, 37.2, 14.1, 4.3, 21.7], "1 con": [55.6, 37.2, 29.4, 22.5, 7.5, 14.9], "2 con": [43.5, 34.4, 22.9, 29.7, 11.3, 16.4], "3 con trở lên": [43.5, 36.2, 19.3, 32.2, 13.0, 20.6]}}, "cross_income_digital": {"labels": ["<25tr", "25-45tr", "50-100tr", "100-200tr", ">200tr"], "values": [57.3, 62.9, 61.9, 60.5, 68.1]}, "cross_income_crypto": {"labels": ["<25tr", "25-45tr", "50-100tr", "100-200tr", ">200tr"], "values": [21.5, 20.9, 22.5, 25.7, 37.8]}, "cross_income_satisfaction_unsat": {"labels": ["<25tr", "25-45tr", "50-100tr", "100-200tr", ">200tr"], "values": [8.9, 8.5, 8.1, 13.2, 20.2]}, "cross_income_selfliteracy_high": {"labels": ["<25tr", "25-45tr", "50-100tr", "100-200tr", ">200tr"], "values": [13.7, 17.7, 20.1, 23.0, 34.5]}, "cross_income_invest": {"labels": ["Cổ phiếu", "Trái phiếu", "Quỹ đầu tư", "Tài sản số"], "series": {"<25tr": [16.1, 13.3, 15.7, 13.5], "25-45tr": [28.0, 19.8, 24.6, 18.9], "50-100tr": [31.1, 18.5, 23.8, 19.3], "100-200tr": [26.3, 23.7, 27.0, 21.7], ">200tr": [42.0, 27.7, 34.5, 29.4]}}, "cross_children_protect": {"labels": ["BH nhân thọ", "BH sức khỏe", "Vay thế chấp", "Tiền gửi VND"], "series": {"Chưa có": [24.8, 31.1, 26.7, 76.2], "1 con": [36.5, 38.7, 42.2, 76.9], "2 con": [43.5, 43.6, 55.1, 83.0], "3 con trở lên": [48.5, 49.5, 59.1, 84.7]}},
+const DATA = {"N": 3470, "cross_reg_occ": {"region": {"labels": ["Miền Bắc", "Miền Trung", "Miền Nam"], "n": [1117, 1022, 1331], "unsat": [9.1, 10.1, 11.5], "dig_ready": [59.2, 61.3, 59.4], "multibank": [67.9, 66.7, 61.9], "products": {"labels": ["tài khoản thanh toán", "Tiền gửi VND", "Tiền gửi ngoại tệ", "Thẻ tín dụng", "Thẻ ghi nợ", "Vay tín chấp", "Vay thế chấp", "Bảo hiểm nhân thọ"], "series": {"Miền Bắc": [95.4, 77.8, 19.6, 55.0, 44.9, 33.1, 41.9, 37.1], "Miền Trung": [95.8, 81.0, 21.5, 55.7, 49.9, 38.3, 47.2, 37.5], "Miền Nam": [96.4, 81.4, 19.0, 58.4, 51.0, 33.9, 46.6, 37.9], "Toàn mẫu": [95.9, 80.1, 19.9, 56.5, 48.7, 34.9, 45.2, 37.5]}}, "goals": {"labels": ["Mua nhà", "Đầu tư tài chính", "Khởi nghiệp / mở rộng KD", "Trả nợ", "Du học", "Nghỉ hưu"], "series": {"Toàn mẫu": [47.6, 46.3, 27.8, 24.3, 18.0, 8.8], "Miền Bắc": [50.2, 48.8, 25.4, 24.8, 17.7, 7.5], "Miền Trung": [48.0, 46.6, 26.0, 24.8, 18.6, 8.7], "Miền Nam": [45.2, 43.9, 31.0, 23.4, 17.7, 10.0]}}}, "occupation": {"labels": ["Chuyên viên/KT", "KD tự do", "Quản lý", "Sinh viên", "Chuyên gia", "Nội trợ", "Nghỉ hưu/TN", "Khác"], "labels_full": ["Chuyên viên, kỹ thuật viên", "Kinh doanh tự do", "Quản lý", "Sinh viên", "Chuyên gia", "Nội trợ", "Thất nghiệp/đã nghỉ hưu", "Khác"], "n": [1037, 893, 537, 182, 127, 110, 74, 510], "unsat": [9.6, 11.1, 10.2, 9.3, 15.0, 10.9, 10.8, 9.4], "dig_ready": [63.4, 57.3, 72.6, 52.2, 63.8, 43.6, 43.2, 51.4], "multibank": [66.4, 67.4, 68.3, 53.3, 82.7, 45.5, 47.3, 62.7], "products": {"labels": ["tài khoản thanh toán", "Tiền gửi VND", "Tiền gửi ngoại tệ", "Thẻ tín dụng", "Thẻ ghi nợ", "Vay tín chấp", "Vay thế chấp", "Bảo hiểm nhân thọ"], "series": {"Chuyên viên, kỹ thuật viên": [96.3, 81.8, 18.0, 69.9, 58.1, 48.1, 50.2, 45.9], "Kinh doanh tự do": [96.6, 78.5, 21.1, 49.8, 47.1, 24.4, 47.6, 31.9], "Quản lý": [96.5, 86.6, 25.3, 73.4, 55.7, 51.0, 61.3, 53.3], "Sinh viên": [94.0, 76.4, 23.6, 28.6, 29.7, 14.3, 15.4, 21.4], "Chuyên gia": [95.3, 86.6, 45.7, 73.2, 65.4, 51.2, 59.1, 48.8], "Nội trợ": [93.6, 70.9, 20.0, 33.6, 30.0, 13.6, 20.9, 20.0], "Thất nghiệp/đã nghỉ hưu": [90.5, 86.5, 16.2, 24.3, 43.2, 10.8, 23.0, 20.3], "Khác": [95.3, 73.5, 9.0, 38.4, 32.7, 21.0, 29.8, 22.7], "Toàn mẫu": [95.9, 80.1, 19.9, 56.5, 48.7, 34.9, 45.2, 37.5]}}, "goals": {"labels": ["Mua nhà", "Đầu tư tài chính", "Khởi nghiệp / mở rộng KD", "Trả nợ", "Du học", "Nghỉ hưu"], "series": {"Toàn mẫu": [47.6, 46.3, 27.8, 24.3, 18.0, 8.8], "Chuyên viên, kỹ thuật viên": [52.2, 52.6, 28.4, 29.5, 20.4, 7.3], "Kinh doanh tự do": [49.4, 41.9, 33.9, 20.7, 14.0, 8.0], "Quản lý": [53.8, 52.0, 23.6, 28.7, 17.9, 9.1], "Sinh viên": [29.1, 54.4, 37.9, 6.6, 36.8, 3.3], "Chuyên gia": [53.5, 65.4, 26.8, 18.9, 24.4, 11.0], "Nội trợ": [31.8, 28.2, 20.0, 17.3, 17.3, 19.1], "Thất nghiệp/đã nghỉ hưu": [17.6, 21.6, 9.5, 21.6, 4.1, 52.7], "Khác": [41.8, 34.9, 21.0, 24.7, 13.7, 5.9]}}}}, "multi_bank": {"overall_pct": 65.3, "n_other": 2265, "n_only_bidv": 1205, "age": {"labels": ["≤25", "26-35", "36-45", "46-55", "≥56"], "values": [67.1, 70.9, 65.3, 57.5, 46.3], "n": [438, 1107, 1272, 478, 175]}, "marital": {"labels": ["Chưa kết hôn", "Đang hôn nhân", "Đã từng KH"], "values": [68.8, 64.6, 60.7], "n": [837, 2343, 290]}, "income": {"labels": ["<25tr", "25-45tr", "50-100tr", "100-200tr", ">200tr"], "values": [60.3, 67.6, 77.3, 78.3, 69.7], "n": [1880, 936, 383, 152, 119]}, "children": {"labels": ["Chưa có", "1 con", "2 con", "≥3 con"], "values": [69.6, 68.3, 61.8, 62.8], "n": [945, 666, 1558, 301]}, "banks": {"labels": ["Vietcombank", "MB", "Vietinbank", "Techcombank", "VPBank"], "values": [1042, 787, 699, 412, 245]}}, "kpi": {"N": 3470, "satisfaction_pct": 81.0, "digital_ready_pct": 59.9, "multibank_pct": 65.3, "age_mean": 37.2, "unsat_pct": 10.3, "unsat_n": 358, "factor_safety_pct": 78.0, "advisory_face_pct": 59.9, "high_lit_pct": 45.1, "buy_house_pct": 47.6, "account_pct": 95.9, "crypto_pct": 22.2}, "age": {"labels": ["Dưới 18", "18-25", "26-35", "36-45", "46-55", "56-65", "Trên 65"], "values": [43, 395, 1107, 1272, 478, 136, 39]}, "income": {"labels": ["<25tr", "25-45tr", "50-100tr", "100-200tr", ">200tr"], "values": [1880, 936, 383, 152, 119]}, "marital": {"labels": ["Chưa kết hôn", "Đang trong hôn nhân", "Đã từng kết hôn"], "values": [837, 2343, 290]}, "education": {"labels": ["THPT-CĐ", "Đại học", "Sau ĐH"], "values": [711, 2046, 713]}, "province": {"provinces": [{"name": "Hà Nội", "count": 394, "region": "Miền Bắc", "pct": 11.4}, {"name": "Hồ Chí Minh", "count": 377, "region": "Miền Nam", "pct": 10.9}, {"name": "Nghệ An", "count": 300, "region": "Miền Trung", "pct": 8.6}, {"name": "Đồng Tháp", "count": 251, "region": "Miền Nam", "pct": 7.2}, {"name": "Đà Nẵng", "count": 232, "region": "Miền Trung", "pct": 6.7}, {"name": "Vĩnh Long", "count": 225, "region": "Miền Nam", "pct": 6.5}, {"name": "Tây Ninh", "count": 219, "region": "Miền Nam", "pct": 6.3}, {"name": "Sơn La", "count": 203, "region": "Miền Bắc", "pct": 5.9}, {"name": "Phú Thọ", "count": 199, "region": "Miền Bắc", "pct": 5.7}, {"name": "Quảng Trị", "count": 177, "region": "Miền Trung", "pct": 5.1}, {"name": "Huế", "count": 173, "region": "Miền Trung", "pct": 5.0}, {"name": "An Giang", "count": 156, "region": "Miền Nam", "pct": 4.5}, {"name": "Quảng Ngãi", "count": 114, "region": "Miền Trung", "pct": 3.3}, {"name": "Cần Thơ", "count": 101, "region": "Miền Nam", "pct": 2.9}, {"name": "Hưng Yên", "count": 74, "region": "Miền Bắc", "pct": 2.1}, {"name": "Hải Phòng", "count": 73, "region": "Miền Bắc", "pct": 2.1}, {"name": "Thái Nguyên", "count": 52, "region": "Miền Bắc", "pct": 1.5}, {"name": "Thanh Hóa", "count": 35, "region": "Miền Bắc", "pct": 1.0}, {"name": "Lạng Sơn", "count": 31, "region": "Miền Bắc", "pct": 0.9}, {"name": "Quảng Ninh", "count": 24, "region": "Miền Bắc", "pct": 0.7}, {"name": "Ninh Bình", "count": 15, "region": "Miền Bắc", "pct": 0.4}, {"name": "Lào Cai", "count": 14, "region": "Miền Bắc", "pct": 0.4}, {"name": "Khánh Hòa", "count": 9, "region": "Miền Trung", "pct": 0.3}, {"name": "Đắk Lắk", "count": 9, "region": "Miền Trung", "pct": 0.3}, {"name": "Gia Lai", "count": 8, "region": "Miền Trung", "pct": 0.2}, {"name": "Bắc Ninh", "count": 3, "region": "Miền Bắc", "pct": 0.1}, {"name": "Đồng Nai", "count": 2, "region": "Miền Nam", "pct": 0.1}], "regions": {"labels": ["Miền Bắc", "Miền Trung", "Miền Nam"], "values": [1117, 1022, 1331], "pct": [32.2, 29.5, 38.4]}, "labels": ["Hà Nội", "Hồ Chí Minh", "Nghệ An", "Đồng Tháp", "Đà Nẵng", "Vĩnh Long", "Tây Ninh", "Sơn La", "Phú Thọ", "Quảng Trị", "Huế", "An Giang", "Quảng Ngãi", "Cần Thơ", "Hưng Yên", "Hải Phòng", "Thái Nguyên", "Thanh Hóa", "Lạng Sơn", "Quảng Ninh", "Ninh Bình", "Lào Cai", "Khánh Hòa", "Đắk Lắk", "Gia Lai", "Bắc Ninh", "Đồng Nai"], "values": [394, 377, 300, 251, 232, 225, 219, 203, 199, 177, 173, 156, 114, 101, 74, 73, 52, 35, 31, 24, 15, 14, 9, 9, 8, 3, 2]}, "region": {"labels": ["Miền Bắc", "Miền Trung", "Miền Nam"], "values": [1117, 1022, 1331]}, "occupation": {"labels": ["Chuyên viên, kỹ thuật viên", "Kinh doanh tự do", "Quản lý", "Sinh viên", "Chuyên gia", "Nội trợ"], "values": [1035, 891, 536, 170, 127, 110]}, "children": {"labels": ["Chưa có", "1 con", "2 con", "3 con trở lên"], "values": [945, 666, 1558, 301]}, "products": {"labels": ["TK thanh toán", "Tiền gửi VND", "Thẻ tín dụng", "Thẻ ghi nợ", "Vay thế chấp", "BH sức khỏe", "BH nhân thọ", "Vay tín chấp", "Cổ phiếu", "Vàng, bạc", "Quỹ đầu tư", "Tiền gửi ngoại tệ", "Trái phiếu", "Tài sản số"], "active": [95.9, 80.1, 56.5, 48.7, 45.2, 39.8, 37.5, 34.9, 22.3, 21.6, 20.1, 19.9, 16.6, 16.5], "frequent": [83.0, 45.0, 35.6, 27.2, 29.2, 22.1, 20.8, 22.2, 10.8, 9.0, 8.8, 8.8, 7.1, 7.8]}, "priority_bank": {"labels": ["Ngân hàng có uy tín cao trên thị trường", "Thao tác trên ứng dụng thuận tiện", "Dịch vụ có nhiều ưu đãi, lãi suất tốt", "Cán bộ giao dịch thân thiện", "Chi nhánh dễ tìm"], "values": [58.8, 58.8, 57.4, 57.0, 46.0]}, "product_choice_factor": {"labels": ["An toàn cao, bảo mật tốt", "Lãi suất và phí cạnh tranh", "Chăm sóc khách hàng tốt", "Dễ hiểu và dễ sử dụng", "Khuyến mãi/ưu đãi nhiều"], "values": [78.0, 74.2, 55.4, 47.4, 23.1]}, "info_source": {"labels": ["Trang web/ứng dụng của ngân hàng", "Nhân viên tư vấn", "Gia đình/bạn bè", "Báo chí/truyền hình", "Tham khảo mạng Tiktok/Youtube/Facebook"], "values": [66.3, 60.3, 60.0, 30.2, 27.9]}, "improvement_wish": {"labels": ["Gia tăng ưu đãi khách hàng theo quy mô giao dịch", "Chăm sóc khách hàng tốt (nhắc nợ tự động hiệu quả, phản hồi thông tin nhanh chóng…)", "Nhiều sản phẩm đa dạng, hấp dẫn hơn", "Thông báo sản phẩm/dịch vụ dễ hiểu hơn", "Tăng dịch vụ khác (phòng chờ sân bay, voucher nhãn hàng khác…)", "Tăng thêm các sự kiện/hoạt động thú vị, hấp dẫn cho khách hàng", "Ưu đãi liên kết sản phẩm trong hệ sinh thái nhiều hơn (chứng khoán, bảo hiểm…)", "Cung cấp thêm thông tin kinh tế/tài chính cho khách hàng tham khảo"], "values": [49.0, 45.5, 41.9, 28.2, 26.6, 23.5, 19.2, 18.0]}, "financial_goal": {"labels": ["Mua nhà", "Đầu tư tài chính", "Khởi nghiệp/kinh doanh", "Trả nợ", "Chưa có kế hoạch cụ thể", "Đầu tư du học/giáo dục", "Nghỉ hưu"], "values": [47.6, 35.9, 27.8, 24.3, 19.3, 17.9, 8.8]}, "satisfaction": {"labels": ["Rất không hài lòng", "Không hài lòng", "Bình thường", "Hài lòng", "Rất hài lòng"], "product": [9.3, 0.3, 9.5, 35.1, 45.9], "care": [8.0, 0.3, 11.6, 34.8, 45.4]}, "digital_readiness": {"labels": ["Tuyệt đối không", "Không muốn sử dụng", "Phân vân", "Có thể sử dụng", "Hoàn toàn sẵn sàng"], "values": [1.1, 3.1, 8.1, 27.9, 59.9]}, "crypto": {"labels": ["Không quan tâm", "Ít quan tâm", "Bình thường", "Quan tâm", "Rất quan tâm"], "values": [15.4, 16.0, 26.5, 19.9, 22.2]}, "self_literacy": {"labels": ["Rất thấp", "Thấp", "Trung bình", "Cao", "Rất cao"], "values": [1.4, 4.6, 49.0, 28.5, 16.6]}, "advisory": {"labels": ["Chưa từng", "Đã từng/dừng", "Hiếm khi", "Thỉnh thoảng", "Thường xuyên"], "values": [16.5, 4.1, 23.1, 37.3, 18.9]}, "advisory_pref": {"labels": ["Gặp trực tiếp", "Nhắn tin/Chat với tư vấn viên", "Gọi điện/gọi hình ảnh", "Không cần tư vấn", "Hỗ trợ bằng AI/robo-advisor"], "values": [59.9, 16.5, 12.0, 7.9, 3.7]}, "unsat": {"n_total": 3470, "n_unsat": 358, "pct_unsat": 10.3, "n_unsat_product": 332, "n_unsat_care": 286, "n_overlap": 260, "age_mean_all": 37.2, "age_mean_seg": 38.1, "age": {"labels": ["Dưới 18", "18-25", "26-35", "36-45", "46-55", "56-65", "Trên 65"], "all": [1.2, 11.4, 31.9, 36.7, 13.8, 3.9, 1.1], "seg": [2.2, 7.8, 29.6, 39.9, 15.4, 4.7, 0.3]}, "income": {"labels": ["<25tr", "25-45tr", "50-100tr", "100-200tr", ">200tr"], "all": [54.2, 27.0, 11.0, 4.4, 3.4], "seg": [50.6, 24.9, 10.3, 6.7, 7.5]}, "marital": {"labels": ["Chưa kết hôn", "Đang trong hôn nhân", "Đã từng kết hôn"], "all": [24.1, 67.5, 8.4], "seg": [17.9, 70.1, 12.0]}, "digital": {"labels": ["Tuyệt đối\nkhông", "Không\nmuốn", "Phân vân", "Có thể", "Hoàn toàn\nsẵn sàng"], "all": [1.1, 3.1, 8.1, 27.9, 59.9], "seg": [1.7, 3.4, 5.9, 21.2, 67.9]}}, "cross_marital_products": {"labels": ["TK toán", "Thẻ TD", "Vay thế chấp", "Vay tín chấp", "BH nhân thọ", "BH sức khỏe"], "series": {"Chưa kết hôn": [93.5, 46.5, 25.7, 23.4, 25.7, 31.1], "Đang trong hôn nhân": [96.8, 59.8, 51.7, 39.0, 41.0, 42.3], "Đã từng kết hôn": [95.2, 58.6, 49.3, 35.5, 43.1, 44.1]}}, "cross_marital_goal": {"labels": ["Mua nhà", "Đầu tư tài chính", "Khởi nghiệp/kinh doanh", "Trả nợ", "Nghỉ hưu", "Đầu tư du học/giáo dục"], "series": {"Chưa kết hôn": [48.4, 36.9, 37.2, 13.0, 5.0, 23.8], "Đang trong hôn nhân": [47.4, 35.8, 24.8, 28.1, 10.0, 16.0], "Đã từng kết hôn": [47.6, 34.1, 24.1, 25.9, 10.3, 16.2]}}, "cross_children_goal": {"labels": ["Mua nhà", "Đầu tư tài chính", "Khởi nghiệp/kinh doanh", "Trả nợ", "Nghỉ hưu", "Đầu tư du học/giáo dục"], "series": {"Chưa có": [50.2, 37.5, 37.2, 14.1, 4.3, 21.7], "1 con": [55.6, 37.2, 29.4, 22.5, 7.5, 14.9], "2 con": [43.5, 34.4, 22.9, 29.7, 11.3, 16.4], "3 con trở lên": [43.5, 36.2, 19.3, 32.2, 13.0, 20.6]}}, "cross_income_digital": {"labels": ["<25tr", "25-45tr", "50-100tr", "100-200tr", ">200tr"], "values": [57.3, 62.9, 61.9, 60.5, 68.1]}, "cross_income_crypto": {"labels": ["<25tr", "25-45tr", "50-100tr", "100-200tr", ">200tr"], "values": [21.5, 20.9, 22.5, 25.7, 37.8]}, "cross_income_satisfaction_unsat": {"labels": ["<25tr", "25-45tr", "50-100tr", "100-200tr", ">200tr"], "values": [8.9, 8.5, 8.1, 13.2, 20.2]}, "cross_income_selfliteracy_high": {"labels": ["<25tr", "25-45tr", "50-100tr", "100-200tr", ">200tr"], "values": [13.7, 17.7, 20.1, 23.0, 34.5]}, "cross_income_invest": {"labels": ["Cổ phiếu", "Trái phiếu", "Quỹ đầu tư", "Tài sản số"], "series": {"<25tr": [16.1, 13.3, 15.7, 13.5], "25-45tr": [28.0, 19.8, 24.6, 18.9], "50-100tr": [31.1, 18.5, 23.8, 19.3], "100-200tr": [26.3, 23.7, 27.0, 21.7], ">200tr": [42.0, 27.7, 34.5, 29.4]}}, "cross_children_protect": {"labels": ["BH nhân thọ", "BH sức khỏe", "Vay thế chấp", "Tiền gửi VND"], "series": {"Chưa có": [24.8, 31.1, 26.7, 76.2], "1 con": [36.5, 38.7, 42.2, 76.9], "2 con": [43.5, 43.6, 55.1, 83.0], "3 con trở lên": [48.5, 49.5, 59.1, 84.7]}},
 "cross_age_products": {"labels": ["TK thanh toán", "TG VND", "Thẻ TD", "Vay thế chấp", "Vay tín chấp", "BH NT", "Cổ phiếu", "Quỹ ĐT"], "series": {"≤25": [92.9, 75.1, 37.7, 19.6, 18.0, 21.9, 20.1, 20.1], "26-35": [95.6, 76.9, 56.1, 37.8, 30.4, 33.2, 20.3, 19.9], "36-45": [97.3, 81.6, 63.9, 56.5, 43.1, 46.5, 24.8, 22.0], "46-55": [96.2, 84.9, 63.0, 59.2, 45.8, 43.5, 26.4, 19.7], "≥56": [94.3, 89.1, 34.3, 36.6, 17.1, 22.3, 10.9, 9.7], "Toàn mẫu": [95.9, 80.1, 56.5, 45.2, 34.9, 37.5, 22.3, 20.1]}},
 "cross_age_goal": {"labels": ["Mua nhà", "Đầu tư tài chính", "Khởi nghiệp/kinh doanh", "Trả nợ", "Đầu tư du học/giáo dục", "Nghỉ hưu", "Chưa có kế hoạch cụ thể"], "series": {"≤25": [42.2, 37.0, 41.3, 9.4, 27.2, 3.7, 26.5], "26-35": [57.3, 37.2, 33.2, 22.5, 15.8, 4.3, 16.2], "36-45": [46.5, 37.5, 24.4, 30.0, 19.1, 6.0, 16.5], "46-55": [40.4, 33.7, 18.4, 29.3, 14.9, 18.0, 23.8], "≥56": [28.0, 20.0, 9.1, 17.1, 8.0, 45.7, 28.0], "Toàn mẫu": [47.6, 35.9, 27.8, 24.3, 17.9, 8.8, 19.3]}},
 "cross_age_digital": {"labels": ["≤25", "26-35", "36-45", "46-55", "≥56"], "ready": [55.7, 60.6, 61.8, 60.0, 50.9], "crypto": [24.9, 22.1, 21.2, 23.8, 18.9], "unsat": [8.0, 8.5, 10.5, 10.9, 10.3], "high_lit": [41.6, 45.1, 45.4, 50.0, 38.3]},
@@ -316,17 +330,24 @@ const dataLabelColor = '#132625';
 // ============ KPI STRIP ============
 function renderKPIs(){
   const k = DATA.kpi;
+  // 12 KPIs · 2 rows × 6 · alternate teal / gold brand colors
   const items = [
-    {num: k.N.toLocaleString('vi-VN'), unit:'', lbl:'Khách hàng tham gia khảo sát', accent:false},
-    {num: k.satisfaction_pct, unit:'%', lbl:'Hài lòng / rất hài lòng với sản phẩm', accent:false},
-    {num: k.digital_ready_pct, unit:'%', lbl:'Sẵn sàng ngân hàng số hoàn toàn', accent:false},
-    {num: k.multibank_pct, unit:'%', lbl:'Giao dịch thêm ngân hàng khác', accent:false},
-    {num: k.age_mean, unit:' tuổi', lbl:'Độ tuổi trung bình khách hàng', accent:false},
-    {num: k.unsat_pct, unit:'%', lbl:`Không hài lòng ít nhất 1 mặt (${k.unsat_n} KH)`, accent:true},
+    {num: k.N.toLocaleString('vi-VN'), unit:'', lbl:'Khách hàng tham gia khảo sát', tone:'teal'},
+    {num: k.satisfaction_pct, unit:'%', lbl:'Hài lòng / rất hài lòng với sản phẩm', tone:'gold'},
+    {num: k.digital_ready_pct, unit:'%', lbl:'Sẵn sàng ngân hàng số hoàn toàn', tone:'teal'},
+    {num: k.multibank_pct, unit:'%', lbl:'Giao dịch thêm ngân hàng khác', tone:'gold'},
+    {num: k.age_mean, unit:' tuổi', lbl:'Độ tuổi trung bình khách hàng', tone:'teal'},
+    {num: k.unsat_pct, unit:'%', lbl:`Không hài lòng ≥1 mặt (${k.unsat_n} KH)`, tone:'gold'},
+    {num: k.account_pct, unit:'%', lbl:'Sử dụng TK thanh toán (tích cực)', tone:'gold'},
+    {num: k.buy_house_pct, unit:'%', lbl:'Kế hoạch mua nhà trong 3 năm tới', tone:'teal'},
+    {num: k.factor_safety_pct, unit:'%', lbl:'YT chọn SP: An toàn & bảo mật', tone:'gold'},
+    {num: k.advisory_face_pct, unit:'%', lbl:'Tư vấn ưa thích: Gặp trực tiếp', tone:'teal'},
+    {num: k.high_lit_pct, unit:'%', lbl:'Hiểu biết TC cao / rất cao', tone:'gold'},
+    {num: k.crypto_pct, unit:'%', lbl:'Rất quan tâm tài sản số (crypto)', tone:'teal'},
   ];
   const el = document.getElementById('kpiStrip');
   el.innerHTML = items.map(it => `
-    <div class="kpi ${it.accent?'accent':''}">
+    <div class="kpi ${it.tone}">
       <div class="num">${it.num}<span class="unit">${it.unit}</span></div>
       <div class="lbl">${it.lbl}</div>
     </div>`).join('');
@@ -755,6 +776,8 @@ RENDERERS.products = function(){
       <button class="seg-btn" data-pr="marital">Theo hôn nhân</button>
       <button class="seg-btn" data-pr="income">Theo thu nhập</button>
       <button class="seg-btn" data-pr="children">Theo số con</button>
+      <button class="seg-btn" data-pr="region">Theo vùng miền</button>
+      <button class="seg-btn" data-pr="occupation">Theo nghề nghiệp</button>
     </div>
 
     <div class="seg-view active" id="pr-overall">
@@ -821,7 +844,24 @@ RENDERERS.products = function(){
       <div class="card" style="margin-top:18px"><h3>Yếu tố chọn SP theo số con</h3><div class="chart-box h-360"><canvas id="pr_c_choice"></canvas></div></div>
       <div class="card" style="margin-top:18px"><h3>Hình thức tư vấn theo số con</h3><div class="chart-box h-360"><canvas id="pr_c_adv"></canvas></div></div>
     </div>
-  `;
+  
+    <div class="seg-view" id="pr-region">
+      <div class="card"><h3>Sử dụng SP tích cực theo vùng miền (có Toàn mẫu)</h3><div class="chart-box h-400"><canvas id="pr_r_prod"></canvas></div></div>
+      <div class="grid grid-2" style="margin-top:18px">
+        <div class="card"><h3>% GD thêm NH khác theo miền</h3><div class="chart-box h-280"><canvas id="pr_r_mb"></canvas></div></div>
+        <div class="card"><h3>Kế hoạch TC theo miền</h3><div class="chart-box h-280"><canvas id="pr_r_goal"></canvas></div></div>
+      </div>
+      <div class="insight teal" style="margin-top:16px"><b>Theo miền:</b> Miền Bắc GD đa NH cao nhất (67,9%); Miền Nam nổi bật khởi nghiệp.</div>
+    </div>
+    <div class="seg-view" id="pr-occupation">
+      <div class="card"><h3>Sử dụng SP tích cực theo nghề nghiệp (có Toàn mẫu)</h3><div class="chart-box h-420"><canvas id="pr_oc_prod"></canvas></div></div>
+      <div class="grid grid-2" style="margin-top:18px">
+        <div class="card"><h3>% GD thêm NH khác theo nghề</h3><div class="chart-box h-300"><canvas id="pr_oc_mb"></canvas></div></div>
+        <div class="card"><h3>Kế hoạch TC theo nghề</h3><div class="chart-box h-300"><canvas id="pr_oc_goal"></canvas></div></div>
+      </div>
+      <div class="insight" style="margin-top:16px"><b>Theo nghề:</b> Quản lý & Chuyên gia đa NH / sẵn sàng số cao; Sinh viên & Nội trợ thấp hơn.</div>
+    </div>
+`;
 
   // Overall
   {
@@ -892,10 +932,31 @@ RENDERERS.products = function(){
       const id = btn.dataset.pr;
       if(!initedPr.has(id)){
         initedPr.add(id);
+
+  function initPrRegion(){
+    const R = DATA.cross_reg_occ.region;
+    const order = ['Toàn mẫu','Miền Bắc','Miền Trung','Miền Nam'];
+    const ser = {}; order.forEach(k=>{ if(R.products.series[k]) ser[k]=R.products.series[k]; });
+    groupedBar('pr_r_prod', R.products.labels, ser, {xFontSize:9, colors:[GOLD, TEAL, TEAL_MID, '#7AB8B5']});
+    labeledBar('pr_r_mb', R.labels, R.multibank, {max:90, colors:[TEAL, TEAL_MID, GOLD]});
+    const gser = {}; order.forEach(k=>{ if(R.goals.series[k]) gser[k]=R.goals.series[k]; });
+    groupedBar('pr_r_goal', R.goals.labels, gser, {xFontSize:9, colors:[GOLD, TEAL, TEAL_MID, '#7AB8B5']});
+  }
+  function initPrOccupation(){
+    const O = DATA.cross_reg_occ.occupation;
+    const order = ['Toàn mẫu'].concat(O.labels_full);
+    const ser = {}; order.forEach(k=>{ if(O.products.series[k]) ser[k]=O.products.series[k]; });
+    groupedBar('pr_oc_prod', O.products.labels, ser, {xFontSize:8, colors:[GOLD,TEAL,TEAL_MID,'#7AB8B5','#A8D0CE','#D9906F',NEG,'#132625']});
+    labeledBar('pr_oc_mb', O.labels, O.multibank, {max:95, colors:O.multibank.map(v=>v>=70?GOLD:v>=60?TEAL:TEAL_MID)});
+    const gser = {}; order.forEach(k=>{ if(O.goals.series[k]) gser[k]=O.goals.series[k]; });
+    groupedBar('pr_oc_goal', O.goals.labels, gser, {xFontSize:8, colors:[GOLD,TEAL,TEAL_MID,'#7AB8B5','#A8D0CE','#D9906F',NEG,'#132625']});
+  }
         if(id==='age') initPrAge();
         if(id==='marital') initPrMarital();
         if(id==='income') initPrIncome();
         if(id==='children') initPrChildren();
+        if(id==='region') initPrRegion();
+        if(id==='occupation') initPrOccupation();
       }
     });
   });
@@ -914,6 +975,8 @@ RENDERERS.satisfaction = function(){
       <button class="seg-btn" data-sa="marital">Theo hôn nhân</button>
       <button class="seg-btn" data-sa="income">Theo thu nhập</button>
       <button class="seg-btn" data-sa="children">Theo số con</button>
+      <button class="seg-btn" data-sa="region">Theo vùng miền</button>
+      <button class="seg-btn" data-sa="occupation">Theo nghề nghiệp</button>
     </div>
 
     <div class="seg-view active" id="sa-overall">
@@ -983,7 +1046,22 @@ RENDERERS.satisfaction = function(){
     <div class="insight" style="margin-top:16px">
       <b>Phát hiện đáng chú ý:</b> Nhóm không hài lòng có độ tuổi trung bình cao hơn (${u.age_mean_seg} so với ${u.age_mean_all}), tỷ trọng thu nhập cao vượt trội, và tỷ lệ "hoàn toàn sẵn sàng" dùng ngân hàng số <b>cao hơn</b> toàn mẫu — khoảng cách giữa kỳ vọng trải nghiệm số và chất lượng thực tế.
     </div>
-  `;
+  
+    <div class="seg-view" id="sa-region">
+      <div class="grid grid-2">
+        <div class="card"><h3>% Không hài lòng ≥1 mặt theo miền</h3><div class="chart-box h-280"><canvas id="sa_r_unsat"></canvas></div></div>
+        <div class="card"><h3>% Sẵn sàng ngân hàng số theo miền</h3><div class="chart-box h-280"><canvas id="sa_r_dig"></canvas></div></div>
+      </div>
+      <div class="insight teal" style="margin-top:16px"><b>Theo miền:</b> Không HL: Bắc 9,1% → Trung 10,1% → Nam 11,5%. Sẵn sàng số ~59–61% đồng đều.</div>
+    </div>
+    <div class="seg-view" id="sa-occupation">
+      <div class="grid grid-2">
+        <div class="card"><h3>% Không hài lòng ≥1 mặt theo nghề</h3><div class="chart-box h-320"><canvas id="sa_oc_unsat"></canvas></div></div>
+        <div class="card"><h3>% Sẵn sàng ngân hàng số theo nghề</h3><div class="chart-box h-320"><canvas id="sa_oc_dig"></canvas></div></div>
+      </div>
+      <div class="insight" style="margin-top:16px"><b>Theo nghề:</b> Quản lý sẵn sàng số 72,6%; Chuyên gia không HL 15%. Nội trợ & nghỉ hưu sẵn sàng số thấp (~43%).</div>
+    </div>
+`;
 
   // --- Overall charts ---
   new Chart(document.getElementById('sa_o_sat'), {
@@ -1112,7 +1190,20 @@ RENDERERS.satisfaction = function(){
         if(id==='age') initSaAge();
         if(id==='marital') initSaMarital();
         if(id==='income') initSaIncome();
+
+  function initSaRegion(){
+    const R = DATA.cross_reg_occ.region;
+    labeledBar('sa_r_unsat', R.labels, R.unsat, {max:20, colors:[NEG, '#D9906F', GOLD]});
+    labeledBar('sa_r_dig', R.labels, R.dig_ready, {max:80, colors:[TEAL, TEAL_MID, GOLD]});
+  }
+  function initSaOccupation(){
+    const O = DATA.cross_reg_occ.occupation;
+    labeledBar('sa_oc_unsat', O.labels, O.unsat, {max:20, colors:O.unsat.map(v=>v>=12?NEG:v>=10?'#D9906F':TEAL_MID)});
+    labeledBar('sa_oc_dig', O.labels, O.dig_ready, {max:85, colors:O.dig_ready.map(v=>v>=65?GOLD:v>=55?TEAL:TEAL_MID)});
+  }
         if(id==='children') initSaChildren();
+        if(id==='region') initSaRegion();
+        if(id==='occupation') initSaOccupation();
       }
     });
   });
@@ -1129,6 +1220,8 @@ RENDERERS.segments = function(){
       <button class="seg-btn" data-seg="marital">Theo hôn nhân</button>
       <button class="seg-btn" data-seg="income">Theo thu nhập</button>
       <button class="seg-btn" data-seg="children">Theo số con</button>
+      <button class="seg-btn" data-seg="region">Theo vùng miền</button>
+      <button class="seg-btn" data-seg="occupation">Theo nghề nghiệp</button>
     </div>
 
     <div class="seg-view active" id="seg-overall">
@@ -1174,7 +1267,24 @@ RENDERERS.segments = function(){
       </div>
       <div class="insight teal" style="margin-top:16px">Khi số con tăng lên, ưu tiên "mua nhà"/"khởi nghiệp" giảm dần trong khi "trả nợ"/"nghỉ hưu" tăng dần — bằng chứng rõ nét về việc gánh nặng tài chính gia đình dịch chuyển ưu tiên từ tích lũy tài sản mới sang bảo vệ tài chính hiện có.</div>
     </div>
-  `;
+  
+    <div class="seg-view" id="seg-region">
+      <div class="grid grid-2">
+        <div class="card"><h3>% GD đa ngân hàng theo miền</h3><div class="chart-box h-280"><canvas id="sg_r_mb"></canvas></div></div>
+        <div class="card"><h3>% Sẵn sàng số theo miền</h3><div class="chart-box h-280"><canvas id="sg_r_dig"></canvas></div></div>
+      </div>
+      <div class="card" style="margin-top:18px"><h3>Kế hoạch tài chính theo miền (có Toàn mẫu)</h3><div class="chart-box h-360"><canvas id="sg_r_goal"></canvas></div></div>
+      <div class="insight teal" style="margin-top:16px"><b>Theo miền:</b> Bắc dẫn đầu đa NH (67,9%); Nam khởi nghiệp cao hơn.</div>
+    </div>
+    <div class="seg-view" id="seg-occupation">
+      <div class="grid grid-2">
+        <div class="card"><h3>% GD đa ngân hàng theo nghề</h3><div class="chart-box h-300"><canvas id="sg_oc_mb"></canvas></div></div>
+        <div class="card"><h3>% Sẵn sàng số theo nghề</h3><div class="chart-box h-300"><canvas id="sg_oc_dig"></canvas></div></div>
+      </div>
+      <div class="card" style="margin-top:18px"><h3>Kế hoạch tài chính theo nghề (có Toàn mẫu)</h3><div class="chart-box h-400"><canvas id="sg_oc_goal"></canvas></div></div>
+      <div class="insight" style="margin-top:16px"><b>Theo nghề:</b> Chuyên gia đa NH 82,7%; Quản lý sẵn sàng số cao nhất.</div>
+    </div>
+`;
 
   // Overall charts (default active)
   const ad = DATA.cross_age_dist;
@@ -1298,10 +1408,29 @@ RENDERERS.segments = function(){
       document.getElementById('seg-'+btn.dataset.seg).classList.add('active');
       if(!initedSeg.has(btn.dataset.seg)){
         initedSeg.add(btn.dataset.seg);
+
+  function initSegRegion(){
+    const R = DATA.cross_reg_occ.region;
+    labeledBar('sg_r_mb', R.labels, R.multibank, {max:90, colors:[TEAL, TEAL_MID, GOLD]});
+    labeledBar('sg_r_dig', R.labels, R.dig_ready, {max:80, colors:[TEAL, TEAL_MID, GOLD]});
+    const order = ['Toàn mẫu','Miền Bắc','Miền Trung','Miền Nam'];
+    const gser = {}; order.forEach(k=>{ if(R.goals.series[k]) gser[k]=R.goals.series[k]; });
+    groupedBar('sg_r_goal', R.goals.labels, gser, {xFontSize:9, colors:[GOLD, TEAL, TEAL_MID, '#7AB8B5']});
+  }
+  function initSegOccupation(){
+    const O = DATA.cross_reg_occ.occupation;
+    labeledBar('sg_oc_mb', O.labels, O.multibank, {max:95, colors:O.multibank.map(v=>v>=70?GOLD:v>=60?TEAL:TEAL_MID)});
+    labeledBar('sg_oc_dig', O.labels, O.dig_ready, {max:85, colors:O.dig_ready.map(v=>v>=65?GOLD:v>=55?TEAL:TEAL_MID)});
+    const order = ['Toàn mẫu'].concat(O.labels_full);
+    const gser = {}; order.forEach(k=>{ if(O.goals.series[k]) gser[k]=O.goals.series[k]; });
+    groupedBar('sg_oc_goal', O.goals.labels, gser, {xFontSize:8, colors:[GOLD,TEAL,TEAL_MID,'#7AB8B5','#A8D0CE','#D9906F',NEG,'#132625']});
+  }
         if(btn.dataset.seg==='age') initAgeCharts();
         if(btn.dataset.seg==='marital') initMaritalCharts();
         if(btn.dataset.seg==='income') initIncomeCharts();
         if(btn.dataset.seg==='children') initChildrenCharts();
+        if(btn.dataset.seg==='region') initSegRegion();
+        if(btn.dataset.seg==='occupation') initSegOccupation();
       }
     });
   });
@@ -1319,6 +1448,8 @@ RENDERERS.trends = function(){
       <button class="seg-btn" data-tr="marital">Theo hôn nhân</button>
       <button class="seg-btn" data-tr="income">Theo thu nhập</button>
       <button class="seg-btn" data-tr="children">Theo số con</button>
+      <button class="seg-btn" data-tr="region">Theo vùng miền</button>
+      <button class="seg-btn" data-tr="occupation">Theo nghề nghiệp</button>
     </div>
 
     <div class="seg-view active" id="tr-overall">
@@ -1373,7 +1504,22 @@ RENDERERS.trends = function(){
         <div class="quote">"Nên hạ lãi suất"</div>
       </div>
     </div>
-  `;
+  
+    <div class="seg-view" id="tr-region">
+      <div class="card"><h3>Kế hoạch tài chính theo miền (có Toàn mẫu)</h3><div class="chart-box h-400"><canvas id="tr_r_goal"></canvas></div></div>
+      <div class="grid grid-2" style="margin-top:18px">
+        <div class="card"><h3>% Không hài lòng theo miền</h3><div class="chart-box h-260"><canvas id="tr_r_unsat"></canvas></div></div>
+        <div class="card"><h3>% Sẵn sàng số theo miền</h3><div class="chart-box h-260"><canvas id="tr_r_dig"></canvas></div></div>
+      </div>
+      <div class="insight teal" style="margin-top:16px"><b>Theo miền:</b> Cơ cấu kế hoạch khá gần nhau giữa 3 miền.</div>
+    </div>
+    <div class="seg-view" id="tr-occupation">
+      <div class="card"><h3>Kế hoạch tài chính theo nghề (có Toàn mẫu)</h3><div class="chart-box h-480"><canvas id="tr_oc_goal"></canvas></div></div>
+      <div class="card" style="margin-top:18px"><h3>% Không hài lòng ≥1 mặt theo nghề</h3><div class="chart-box h-400"><canvas id="tr_oc_unsat"></canvas></div></div>
+      <div class="card" style="margin-top:18px"><h3>% Sẵn sàng ngân hàng số theo nghề</h3><div class="chart-box h-400"><canvas id="tr_oc_dig"></canvas></div></div>
+      <div class="insight" style="margin-top:16px"><b>Theo nghề:</b> Nghề ảnh hưởng rõ đến sẵn sàng số và định hướng kế hoạch TC. Quản lý sẵn sàng số cao; Chuyên gia không HL cao hơn trung bình.</div>
+    </div>
+`;
 
   // Overall (default)
   labeledBar('tr_o_goal', T.goal_labels, T.overall.goals, {max:Math.max(...T.overall.goals)*1.25});
@@ -1419,7 +1565,26 @@ RENDERERS.trends = function(){
         if(id==='age') initTrAge();
         if(id==='marital') initTrMarital();
         if(id==='income') initTrIncome();
+
+  function initTrRegion(){
+    const R = DATA.cross_reg_occ.region;
+    const order = ['Toàn mẫu','Miền Bắc','Miền Trung','Miền Nam'];
+    const gser = {}; order.forEach(k=>{ if(R.goals.series[k]) gser[k]=R.goals.series[k]; });
+    groupedBar('tr_r_goal', R.goals.labels, gser, {xFontSize:9, colors:[GOLD, TEAL, TEAL_MID, '#7AB8B5']});
+    labeledBar('tr_r_unsat', R.labels, R.unsat, {max:20, colors:[NEG, '#D9906F', GOLD]});
+    labeledBar('tr_r_dig', R.labels, R.dig_ready, {max:80, colors:[TEAL, TEAL_MID, GOLD]});
+  }
+  function initTrOccupation(){
+    const O = DATA.cross_reg_occ.occupation;
+    const order = ['Toàn mẫu'].concat(O.labels_full);
+    const gser = {}; order.forEach(k=>{ if(O.goals.series[k]) gser[k]=O.goals.series[k]; });
+    groupedBar('tr_oc_goal', O.goals.labels, gser, {xFontSize:10, colors:[GOLD,TEAL,TEAL_MID,'#7AB8B5','#A8D0CE','#D9906F',NEG,'#132625']});
+    labeledBar('tr_oc_unsat', O.labels, O.unsat, {max:22, yFontSize:12, colors:O.unsat.map(v=>v>=12?NEG:v>=10?'#D9906F':TEAL_MID)});
+    labeledBar('tr_oc_dig', O.labels, O.dig_ready, {max:90, yFontSize:12, colors:O.dig_ready.map(v=>v>=65?GOLD:v>=55?TEAL:TEAL_MID)});
+  }
         if(id==='children') initTrChildren();
+        if(id==='region') initTrRegion();
+        if(id==='occupation') initTrOccupation();
       }
     });
   });
