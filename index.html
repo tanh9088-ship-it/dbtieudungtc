@@ -160,11 +160,93 @@ section.panel.active{display:block;}
   border:1px solid var(--border);
   border-radius:14px;
   padding:20px 20px 14px;
+  position:relative;
 }
 .card h3{
   font-size:13.5px; font-weight:700; color:var(--ink); margin-bottom:2px;
+  padding-right:96px;
 }
 .card .card-sub{font-size:11.5px; color:var(--grey-light); margin-bottom:12px;}
+.card-dl{
+  position:absolute; top:8px; right:8px;
+  display:flex; align-items:flex-start; gap:4px; z-index:8;
+}
+.card-dl > button.dl-ico{
+  border:1px solid var(--border); background:#fff; color:var(--teal);
+  font-size:11px; font-weight:700; width:28px; height:28px; padding:0;
+  border-radius:7px; cursor:pointer;
+  display:inline-flex; align-items:center; justify-content:center;
+  box-shadow:0 1px 3px rgba(0,0,0,0.06);
+  transition:all .12s ease; line-height:1;
+}
+.card-dl > button.dl-ico:hover{
+  background:var(--teal); color:#fff; border-color:var(--teal);
+}
+.card-dl > button.dl-ico.gold:hover{
+  background:#E6B020; border-color:#E6B020; color:#132625;
+}
+.card-dl > button.dl-ico.active{
+  background:var(--teal); color:#fff; border-color:var(--teal);
+}
+.card-style{
+  display:none;
+  position:absolute; top:32px; right:0;
+  flex-direction:column; gap:2px;
+  min-width:148px;
+  padding:8px 8px 7px;
+  background:#fff;
+  border:1px solid #d5e3e1;
+  border-radius:10px;
+  box-shadow:0 8px 24px rgba(19,38,37,0.14), 0 1px 3px rgba(0,0,0,0.06);
+}
+.card-style.open{ display:flex; }
+.card-style .st-head{
+  font-size:9.5px; font-weight:700; color:#8a9a98;
+  text-transform:uppercase; letter-spacing:.04em;
+  margin-bottom:2px; padding:0 2px;
+}
+.card-style .st-row{
+  display:flex; align-items:center; gap:3px;
+  font-size:10.5px; font-weight:600; color:#5B6B6A;
+}
+.card-style .st-row span.lbl{
+  min-width:44px; text-align:left; flex:1;
+  white-space:nowrap;
+}
+.card-style button.st-btn{
+  border:1px solid var(--border); background:#f7faf9; color:var(--teal);
+  font-size:12px; font-weight:800; width:20px; height:20px; padding:0;
+  border-radius:5px; cursor:pointer; line-height:18px;
+  box-shadow:none; display:inline-flex; align-items:center; justify-content:center;
+  transition:all .1s ease;
+}
+.card-style button.st-btn:hover{
+  background:var(--teal); color:#fff; border-color:var(--teal);
+}
+.card-style .st-val{
+  min-width:22px; text-align:center; font-variant-numeric:tabular-nums;
+  color:var(--ink); font-weight:700; font-size:10.5px;
+}
+.dl-toolbar{
+  display:flex; gap:10px; flex-wrap:wrap; align-items:center;
+  margin:12px 0 4px; justify-content:flex-end;
+}
+.dl-toolbar button{
+  border:1.5px solid #d5e3e1; background:#fff; color:var(--teal);
+  font-size:12.5px; font-weight:700; padding:9px 14px; border-radius:10px;
+  cursor:pointer; box-shadow:0 2px 0 #c5d5d3, 0 3px 8px rgba(0,0,0,0.06);
+  transition:all .15s ease;
+}
+.dl-toolbar button:hover{
+  background:var(--teal); color:#fff; border-color:var(--teal);
+  transform:translateY(-1px);
+}
+.dl-toolbar button.gold-btn{
+  color:#8a6a00; border-color:#e8d48a;
+}
+.dl-toolbar button.gold-btn:hover{
+  background:linear-gradient(180deg,#FFD24D,#FFC62F); color:#132625; border-color:#E6B020;
+}
 .card .chart-box{position:relative; width:100%;}
 .h-220{height:220px;}.h-480{height:480px;}.h-720{height:720px;}.h-400{height:400px;} .h-260{height:260px;} .h-300{height:300px;} .h-340{height:340px;}.h-360{height:360px;}.h-420{height:420px;} .h-200{height:200px;}
 
@@ -263,8 +345,8 @@ body.locked > *:not(#lock-screen){visibility:hidden !important;}
 <header class="top">
   <div class="top-inner">
     <div class="eyebrow">Nghiên cứu người tiêu dùng tài chính</div>
-    <h1 class="title">Dashboard khảo sát khách hàng tiêu dùng tài chính - Viện NCKT BIDV phối hợp Viện Tài chính Hana</h1>
-    <p class="subtitle">Dashboard tổng hợp kết quả nghiên cứu từ dữ liệu khảo sát khách hàng: đặc điểm nhân khẩu học, hành vi sử dụng sản phẩm, mức độ hài lòng, phân khúc theo vòng đời tài chính và các khuyến nghị cải thiện dịch vụ.</p>
+    <h1 class="title">Dashboard khảo sát khách hàng tiêu dùng tài chính</h1>
+    <p class="subtitle">Tổng hợp toàn bộ kết quả nghiên cứu từ dữ liệu khảo sát khách hàng: đặc điểm nhân khẩu học, hành vi sử dụng sản phẩm, mức độ hài lòng, phân khúc theo vòng đời tài chính và các khuyến nghị cải thiện dịch vụ.</p>
     <div class="kpi-strip" id="kpiStrip"></div>
   </div>
 </header>
@@ -327,6 +409,61 @@ Chart.defaults.plugins.legend.labels.boxHeight = 8;
 
 const dataLabelColor = '#132625';
 
+/** Per-chart style: legend & data-label font sizes (px) */
+const CHART_STYLE_DEFAULTS = { legend: 10.5, label: 10.5, axis: 10.5 };
+function getChartLabelSize(chart, fallback){
+  if(chart && chart.$dlFontSize != null) return chart.$dlFontSize;
+  return fallback != null ? fallback : CHART_STYLE_DEFAULTS.label;
+}
+function getChartLegendSize(chart, fallback){
+  if(chart && chart.$legendFontSize != null) return chart.$legendFontSize;
+  return fallback != null ? fallback : CHART_STYLE_DEFAULTS.legend;
+}
+function getChartAxisSize(chart, fallback){
+  if(chart && chart.$axisFontSize != null) return chart.$axisFontSize;
+  return fallback != null ? fallback : CHART_STYLE_DEFAULTS.axis;
+}
+function _ensureFontObj(parent, key){
+  if(!parent[key] || typeof parent[key] !== 'object') parent[key] = {};
+  if(!parent[key].font || typeof parent[key].font !== 'object') parent[key].font = {};
+  return parent[key].font;
+}
+function applyChartTextStyle(chart, {legendSize, labelSize, axisSize}={}){
+  if(!chart) return;
+  if(labelSize != null){
+    chart.$dlFontSize = +labelSize;
+  }
+  if(legendSize != null){
+    chart.$legendFontSize = +legendSize;
+    const leg = chart.options && chart.options.plugins && chart.options.plugins.legend;
+    if(leg){
+      if(leg.labels == null) leg.labels = {};
+      if(leg.labels.font == null || typeof leg.labels.font !== 'object') leg.labels.font = {};
+      leg.labels.font.size = +legendSize;
+    }
+  }
+  if(axisSize != null){
+    chart.$axisFontSize = +axisSize;
+    const scales = chart.options && chart.options.scales;
+    if(scales){
+      Object.keys(scales).forEach(k=>{
+        const sc = scales[k];
+        if(!sc || typeof sc !== 'object') return;
+        // tick labels (nhãn trục)
+        if(sc.ticks == null) sc.ticks = {};
+        const tickFont = _ensureFontObj(sc, 'ticks');
+        tickFont.size = +axisSize;
+        // axis title if present / ensure size ready
+        if(sc.title == null) sc.title = { display: false, text: '' };
+        const titleFont = _ensureFontObj(sc, 'title');
+        titleFont.size = +axisSize + 1;
+      });
+    }
+  }
+  try{ chart.update('none'); }catch(e){ try{ chart.update(); }catch(_){} }
+}
+
+
 // ============ KPI STRIP ============
 function renderKPIs(){
   const k = DATA.kpi;
@@ -378,6 +515,8 @@ function switchTab(id){
     initedTabs.add(id);
     RENDERERS[id]();
   }
+  // Gắn nút tải biểu đồ (PNG / Excel) cho panel đang mở
+  setTimeout(()=> attachDownloadButtons(document.getElementById('panel-'+id)), 80);
 }
 
 // ============ CHART HELPERS ============
@@ -394,7 +533,8 @@ function barChart(ctx, labels, datasets, opts={}){
       id:'barLbl',
       afterDatasetsDraw(chart){
         const {ctx} = chart; ctx.save();
-        ctx.font = '600 10px -apple-system, sans-serif';
+        const fs = getChartLabelSize(chart, 10);
+        ctx.font = '600 ' + fs + 'px -apple-system, sans-serif';
         ctx.fillStyle = dataLabelColor;
         chart.data.datasets.forEach((ds, di)=>{
           if(ds.hidden) return;
@@ -424,7 +564,7 @@ function barChart(ctx, labels, datasets, opts={}){
       responsive:true, maintainAspectRatio:false,
       layout:{ padding: horizontal ? {right: 40} : {top: 16} },
       plugins:{
-        legend:{ display: datasets.length>1, position:'bottom' },
+        legend:{ display: datasets.length>1, position:'bottom', labels:{font:{size:10.5}} },
         tooltip:{ callbacks:{ label: (c)=>{
           if(asCount){
             const pct = (c.raw / totalN * 100).toFixed(1);
@@ -454,7 +594,8 @@ function labeledBar(canvasId, labels, values, opts={}){
         const {ctx} = chart;
         ctx.save();
         ctx.fillStyle = dataLabelColor;
-        ctx.font = '700 10.5px -apple-system, sans-serif';
+        const fs = getChartLabelSize(chart, 10.5);
+        ctx.font = '700 ' + fs + 'px -apple-system, sans-serif';
         chart.data.datasets[0].data.forEach((v,i)=>{
           const meta = chart.getDatasetMeta(0).data[i];
           if(v==null) return;
@@ -511,20 +652,22 @@ function productStackedBar(canvasId, labels, frequent, occasional, opts={}){
           const total = +(freq + occ).toFixed(1);
           const meta1 = chart.getDatasetMeta(1).data[i];
           const meta0 = chart.getDatasetMeta(0).data[i];
+          const fs = getChartLabelSize(chart, 10.5);
+          const fsIn = Math.max(8, fs - 1);
           ctx.fillStyle = dataLabelColor;
-          ctx.font = '700 10.5px -apple-system, sans-serif';
+          ctx.font = '700 ' + fs + 'px -apple-system, sans-serif';
           ctx.textAlign = 'left';
           ctx.textBaseline = 'middle';
           ctx.fillText(total + '%', meta1.x + 6, meta1.y);
           if(freq >= 12){
             ctx.fillStyle = '#fff';
-            ctx.font = '600 9.5px -apple-system, sans-serif';
+            ctx.font = '600 ' + fsIn + 'px -apple-system, sans-serif';
             ctx.textAlign = 'center';
             ctx.fillText(freq + '%', meta0.base + (meta0.x - meta0.base) / 2, meta0.y);
           }
           if(occ >= 10){
             ctx.fillStyle = '#132625';
-            ctx.font = '600 9.5px -apple-system, sans-serif';
+            ctx.font = '600 ' + fsIn + 'px -apple-system, sans-serif';
             ctx.textAlign = 'center';
             ctx.fillText(occ + '%', meta1.base + (meta1.x - meta1.base) / 2, meta1.y);
           }
@@ -570,7 +713,8 @@ function groupedBar(canvasId, labels, series, opts={}){
       id:'grpLbl',
       afterDatasetsDraw(chart){
         const {ctx}=chart; ctx.save();
-        ctx.font='600 8.5px -apple-system, sans-serif';
+        const fs = getChartLabelSize(chart, 8.5);
+        ctx.font='600 ' + fs + 'px -apple-system, sans-serif';
         ctx.fillStyle=dataLabelColor;
         ctx.textAlign='center'; ctx.textBaseline='bottom';
         chart.data.datasets.forEach((ds,di)=>{
@@ -617,7 +761,8 @@ function donutChart(canvasId, labels, values, opts={}){
           const mid = (arc.startAngle + arc.endAngle) / 2;
           const r = (arc.innerRadius + arc.outerRadius) / 2;
           ctx.fillStyle = '#fff';
-          ctx.font = '700 11px -apple-system, sans-serif';
+          const fs = getChartLabelSize(chart, 11);
+          ctx.font = '700 ' + fs + 'px -apple-system, sans-serif';
           ctx.textAlign = 'center'; ctx.textBaseline = 'middle';
           ctx.fillText(pct.toFixed(1) + '%', arc.x + Math.cos(mid)*r, arc.y + Math.sin(mid)*r);
         });
@@ -650,7 +795,8 @@ function compareBar(canvasId, labels, allVals, segVals, allLabel, segLabel){
       id:'cmpLbl',
       afterDatasetsDraw(chart){
         const {ctx}=chart; ctx.save();
-        ctx.font='600 9px -apple-system, sans-serif';
+        const fs = getChartLabelSize(chart, 9);
+        ctx.font='600 ' + fs + 'px -apple-system, sans-serif';
         ctx.fillStyle=dataLabelColor;
         ctx.textAlign='center'; ctx.textBaseline='bottom';
         chart.data.datasets.forEach((ds,di)=>{
@@ -922,17 +1068,6 @@ RENDERERS.products = function(){
     groupedBar('pr_c_choice', P.choice_labels, P.children.series_choice, {xFontSize:9, colors:chColors});
     groupedBar('pr_c_adv', P.adv_labels, P.children.series_advisory, {xFontSize:9, colors:chColors});
   }
-
-  el.querySelectorAll('.seg-toggle .seg-btn').forEach(btn=>{
-    btn.addEventListener('click', ()=>{
-      el.querySelectorAll('.seg-toggle .seg-btn').forEach(b=>b.classList.remove('active'));
-      btn.classList.add('active');
-      el.querySelectorAll('.seg-view').forEach(v=>v.classList.remove('active'));
-      document.getElementById('pr-'+btn.dataset.pr).classList.add('active');
-      const id = btn.dataset.pr;
-      if(!initedPr.has(id)){
-        initedPr.add(id);
-
   function initPrRegion(){
     const R = DATA.cross_reg_occ.region;
     const order = ['Toàn mẫu','Miền Bắc','Miền Trung','Miền Nam'];
@@ -951,6 +1086,16 @@ RENDERERS.products = function(){
     const gser = {}; order.forEach(k=>{ if(O.goals.series[k]) gser[k]=O.goals.series[k]; });
     groupedBar('pr_oc_goal', O.goals.labels, gser, {xFontSize:8, colors:[GOLD,TEAL,TEAL_MID,'#7AB8B5','#A8D0CE','#D9906F',NEG,'#132625']});
   }
+
+  el.querySelectorAll('.seg-toggle .seg-btn').forEach(btn=>{
+    btn.addEventListener('click', ()=>{
+      el.querySelectorAll('.seg-toggle .seg-btn').forEach(b=>b.classList.remove('active'));
+      btn.classList.add('active');
+      el.querySelectorAll('.seg-view').forEach(v=>v.classList.remove('active'));
+      document.getElementById('pr-'+btn.dataset.pr).classList.add('active');
+      const id = btn.dataset.pr;
+      if(!initedPr.has(id)){
+        initedPr.add(id);
         if(id==='age') initPrAge();
         if(id==='marital') initPrMarital();
         if(id==='income') initPrIncome();
@@ -961,6 +1106,7 @@ RENDERERS.products = function(){
     });
   });
 };
+
 
 RENDERERS.satisfaction = function(){
   const el = document.getElementById('panel-satisfaction');
@@ -1071,7 +1217,7 @@ RENDERERS.satisfaction = function(){
       {label:'Chăm sóc khách hàng', data:S.overall.sat_care, backgroundColor:GOLD, borderRadius:3},
     ]},
     plugins:[{id:'satLbl', afterDatasetsDraw(chart){
-      const {ctx}=chart; ctx.save(); ctx.font='600 9px -apple-system,sans-serif'; ctx.fillStyle=dataLabelColor;
+      const {ctx}=chart; ctx.save(); const fs=getChartLabelSize(chart,9); ctx.font='600 '+fs+'px -apple-system,sans-serif'; ctx.fillStyle=dataLabelColor;
       ctx.textAlign='center'; ctx.textBaseline='bottom';
       chart.data.datasets.forEach((ds,di)=>{ chart.getDatasetMeta(di).data.forEach((bar,i)=>{
         const v=ds.data[i]; if(v>=1) ctx.fillText(v+'%', bar.x, bar.y-2);
@@ -1090,7 +1236,7 @@ RENDERERS.satisfaction = function(){
       data:[ +(u.n_unsat_product/u.n_total*100).toFixed(1), +(u.n_unsat_care/u.n_total*100).toFixed(1) ],
       backgroundColor:[NEG, '#D9906F'], borderRadius:6, barPercentage:0.55
     }]},
-    plugins:[{id:'vl', afterDatasetsDraw(ch){ const {ctx}=ch; ctx.save(); ctx.fillStyle=dataLabelColor; ctx.font='700 12px sans-serif'; ctx.textAlign='center';
+    plugins:[{id:'vl', afterDatasetsDraw(ch){ const {ctx}=ch; ctx.save(); ctx.fillStyle=dataLabelColor; ctx.font='700 '+getChartLabelSize(ch,12)+'px sans-serif'; ctx.textAlign='center';
       ch.getDatasetMeta(0).data.forEach((bar,i)=>{ const v=ch.data.datasets[0].data[i]; ctx.fillText(v+'%', bar.x, bar.y-6); });
       ctx.restore(); }}],
     options:{ responsive:true, maintainAspectRatio:false, plugins:{legend:{display:false},
@@ -1141,7 +1287,7 @@ RENDERERS.satisfaction = function(){
         {label:'Rất quan tâm TS số', data: keys.map(k=>cryObj[k]), backgroundColor:GOLD, borderRadius:3},
       ]},
       plugins:[{id:'pctLbl', afterDatasetsDraw(chart){
-        const {ctx}=chart; ctx.save(); ctx.font='600 9px -apple-system,sans-serif'; ctx.fillStyle=dataLabelColor;
+        const {ctx}=chart; ctx.save(); const fs=getChartLabelSize(chart,9); ctx.font='600 '+fs+'px -apple-system,sans-serif'; ctx.fillStyle=dataLabelColor;
         ctx.textAlign='center'; ctx.textBaseline='bottom';
         chart.data.datasets.forEach((ds,di)=>{ chart.getDatasetMeta(di).data.forEach((bar,i)=>{
           const v=ds.data[i]; if(v!=null && v>=1) ctx.fillText(v+'%', bar.x, bar.y-2);
@@ -1178,6 +1324,17 @@ RENDERERS.satisfaction = function(){
     unsatBar('sa_c_unsat', S.children.unsat, chColors);
   }
 
+  function initSaRegion(){
+    const R = DATA.cross_reg_occ.region;
+    labeledBar('sa_r_unsat', R.labels, R.unsat, {max:20, colors:[NEG, '#D9906F', GOLD]});
+    labeledBar('sa_r_dig', R.labels, R.dig_ready, {max:80, colors:[TEAL, TEAL_MID, GOLD]});
+  }
+  function initSaOccupation(){
+    const O = DATA.cross_reg_occ.occupation;
+    labeledBar('sa_oc_unsat', O.labels, O.unsat, {max:20, colors:O.unsat.map(v=>v>=12?NEG:v>=10?'#D9906F':TEAL_MID)});
+    labeledBar('sa_oc_dig', O.labels, O.dig_ready, {max:85, colors:O.dig_ready.map(v=>v>=65?GOLD:v>=55?TEAL:TEAL_MID)});
+  }
+
   el.querySelectorAll('.seg-toggle .seg-btn').forEach(btn=>{
     btn.addEventListener('click', ()=>{
       el.querySelectorAll('.seg-toggle .seg-btn').forEach(b=>b.classList.remove('active'));
@@ -1190,17 +1347,6 @@ RENDERERS.satisfaction = function(){
         if(id==='age') initSaAge();
         if(id==='marital') initSaMarital();
         if(id==='income') initSaIncome();
-
-  function initSaRegion(){
-    const R = DATA.cross_reg_occ.region;
-    labeledBar('sa_r_unsat', R.labels, R.unsat, {max:20, colors:[NEG, '#D9906F', GOLD]});
-    labeledBar('sa_r_dig', R.labels, R.dig_ready, {max:80, colors:[TEAL, TEAL_MID, GOLD]});
-  }
-  function initSaOccupation(){
-    const O = DATA.cross_reg_occ.occupation;
-    labeledBar('sa_oc_unsat', O.labels, O.unsat, {max:20, colors:O.unsat.map(v=>v>=12?NEG:v>=10?'#D9906F':TEAL_MID)});
-    labeledBar('sa_oc_dig', O.labels, O.dig_ready, {max:85, colors:O.dig_ready.map(v=>v>=65?GOLD:v>=55?TEAL:TEAL_MID)});
-  }
         if(id==='children') initSaChildren();
         if(id==='region') initSaRegion();
         if(id==='occupation') initSaOccupation();
@@ -1323,7 +1469,7 @@ RENDERERS.segments = function(){
         {label:'Rất quan tâm tài sản số', data:dig.crypto, backgroundColor:GOLD, borderRadius:3},
       ]},
       plugins:[{id:'pctLbl', afterDatasetsDraw(chart){
-      const {ctx}=chart; ctx.save(); ctx.font='600 9px -apple-system,sans-serif'; ctx.fillStyle=dataLabelColor;
+      const {ctx}=chart; ctx.save(); const fs=getChartLabelSize(chart,9); ctx.font='600 '+fs+'px -apple-system,sans-serif'; ctx.fillStyle=dataLabelColor;
       ctx.textAlign='center'; ctx.textBaseline='bottom';
       chart.data.datasets.forEach((ds,di)=>{ chart.getDatasetMeta(di).data.forEach((bar,i)=>{
         const v=ds.data[i]; if(v!=null && v>=1) ctx.fillText(v+'%', bar.x, bar.y-2);
@@ -1341,7 +1487,7 @@ RENDERERS.segments = function(){
         {label:'Hiểu biết TC cao / rất cao', data:dig.high_lit, backgroundColor:TEAL_MID, borderRadius:3},
       ]},
       plugins:[{id:'pctLbl', afterDatasetsDraw(chart){
-      const {ctx}=chart; ctx.save(); ctx.font='600 9px -apple-system,sans-serif'; ctx.fillStyle=dataLabelColor;
+      const {ctx}=chart; ctx.save(); const fs=getChartLabelSize(chart,9); ctx.font='600 '+fs+'px -apple-system,sans-serif'; ctx.fillStyle=dataLabelColor;
       ctx.textAlign='center'; ctx.textBaseline='bottom';
       chart.data.datasets.forEach((ds,di)=>{ chart.getDatasetMeta(di).data.forEach((bar,i)=>{
         const v=ds.data[i]; if(v!=null && v>=1) ctx.fillText(v+'%', bar.x, bar.y-2);
@@ -1366,7 +1512,7 @@ RENDERERS.segments = function(){
         {label:'Rất quan tâm tài sản số', data:DATA.cross_income_crypto.values, backgroundColor:GOLD, borderRadius:3},
       ]},
       plugins:[{id:'pctLbl', afterDatasetsDraw(chart){
-      const {ctx}=chart; ctx.save(); ctx.font='600 9px -apple-system,sans-serif'; ctx.fillStyle=dataLabelColor;
+      const {ctx}=chart; ctx.save(); const fs=getChartLabelSize(chart,9); ctx.font='600 '+fs+'px -apple-system,sans-serif'; ctx.fillStyle=dataLabelColor;
       ctx.textAlign='center'; ctx.textBaseline='bottom';
       chart.data.datasets.forEach((ds,di)=>{ chart.getDatasetMeta(di).data.forEach((bar,i)=>{
         const v=ds.data[i]; if(v!=null && v>=1) ctx.fillText(v+'%', bar.x, bar.y-2);
@@ -1383,7 +1529,7 @@ RENDERERS.segments = function(){
         {label:'Hiểu biết TC "rất cao"', data:DATA.cross_income_selfliteracy_high.values, backgroundColor:TEAL_MID, borderRadius:3},
       ]},
       plugins:[{id:'pctLbl', afterDatasetsDraw(chart){
-      const {ctx}=chart; ctx.save(); ctx.font='600 9px -apple-system,sans-serif'; ctx.fillStyle=dataLabelColor;
+      const {ctx}=chart; ctx.save(); const fs=getChartLabelSize(chart,9); ctx.font='600 '+fs+'px -apple-system,sans-serif'; ctx.fillStyle=dataLabelColor;
       ctx.textAlign='center'; ctx.textBaseline='bottom';
       chart.data.datasets.forEach((ds,di)=>{ chart.getDatasetMeta(di).data.forEach((bar,i)=>{
         const v=ds.data[i]; if(v!=null && v>=1) ctx.fillText(v+'%', bar.x, bar.y-2);
@@ -1399,16 +1545,6 @@ RENDERERS.segments = function(){
     groupedBar('sg_c_goal', DATA.cross_children_goal.labels, DATA.cross_children_goal.series, {xFontSize:9});
     groupedBar('sg_c_protect', DATA.cross_children_protect.labels, DATA.cross_children_protect.series, {xFontSize:10});
   }
-
-  el.querySelectorAll('.seg-btn').forEach(btn=>{
-    btn.addEventListener('click', ()=>{
-      el.querySelectorAll('.seg-btn').forEach(b=>b.classList.remove('active'));
-      btn.classList.add('active');
-      el.querySelectorAll('.seg-view').forEach(v=>v.classList.remove('active'));
-      document.getElementById('seg-'+btn.dataset.seg).classList.add('active');
-      if(!initedSeg.has(btn.dataset.seg)){
-        initedSeg.add(btn.dataset.seg);
-
   function initSegRegion(){
     const R = DATA.cross_reg_occ.region;
     labeledBar('sg_r_mb', R.labels, R.multibank, {max:90, colors:[TEAL, TEAL_MID, GOLD]});
@@ -1425,6 +1561,15 @@ RENDERERS.segments = function(){
     const gser = {}; order.forEach(k=>{ if(O.goals.series[k]) gser[k]=O.goals.series[k]; });
     groupedBar('sg_oc_goal', O.goals.labels, gser, {xFontSize:8, colors:[GOLD,TEAL,TEAL_MID,'#7AB8B5','#A8D0CE','#D9906F',NEG,'#132625']});
   }
+
+  el.querySelectorAll('.seg-btn').forEach(btn=>{
+    btn.addEventListener('click', ()=>{
+      el.querySelectorAll('.seg-btn').forEach(b=>b.classList.remove('active'));
+      btn.classList.add('active');
+      el.querySelectorAll('.seg-view').forEach(v=>v.classList.remove('active'));
+      document.getElementById('seg-'+btn.dataset.seg).classList.add('active');
+      if(!initedSeg.has(btn.dataset.seg)){
+        initedSeg.add(btn.dataset.seg);
         if(btn.dataset.seg==='age') initAgeCharts();
         if(btn.dataset.seg==='marital') initMaritalCharts();
         if(btn.dataset.seg==='income') initIncomeCharts();
@@ -1435,6 +1580,7 @@ RENDERERS.segments = function(){
     });
   });
 };
+
 
 RENDERERS.trends = function(){
   const el = document.getElementById('panel-trends');
@@ -1552,20 +1698,6 @@ RENDERERS.trends = function(){
     groupedBar('tr_c_lit', T.lit_labels, T.children.series_lit, {xFontSize:10, colors:chColors});
     groupedBar('tr_c_imp', T.imp_labels, T.children.series_imp, {xFontSize:9, colors:chColors});
   }
-
-  el.querySelectorAll('.seg-toggle .seg-btn').forEach(btn=>{
-    btn.addEventListener('click', ()=>{
-      el.querySelectorAll('.seg-toggle .seg-btn').forEach(b=>b.classList.remove('active'));
-      btn.classList.add('active');
-      el.querySelectorAll('.seg-view').forEach(v=>v.classList.remove('active'));
-      document.getElementById('tr-'+btn.dataset.tr).classList.add('active');
-      const id = btn.dataset.tr;
-      if(!initedTr.has(id)){
-        initedTr.add(id);
-        if(id==='age') initTrAge();
-        if(id==='marital') initTrMarital();
-        if(id==='income') initTrIncome();
-
   function initTrRegion(){
     const R = DATA.cross_reg_occ.region;
     const order = ['Toàn mẫu','Miền Bắc','Miền Trung','Miền Nam'];
@@ -1582,6 +1714,19 @@ RENDERERS.trends = function(){
     labeledBar('tr_oc_unsat', O.labels, O.unsat, {max:22, yFontSize:12, colors:O.unsat.map(v=>v>=12?NEG:v>=10?'#D9906F':TEAL_MID)});
     labeledBar('tr_oc_dig', O.labels, O.dig_ready, {max:90, yFontSize:12, colors:O.dig_ready.map(v=>v>=65?GOLD:v>=55?TEAL:TEAL_MID)});
   }
+
+  el.querySelectorAll('.seg-toggle .seg-btn').forEach(btn=>{
+    btn.addEventListener('click', ()=>{
+      el.querySelectorAll('.seg-toggle .seg-btn').forEach(b=>b.classList.remove('active'));
+      btn.classList.add('active');
+      el.querySelectorAll('.seg-view').forEach(v=>v.classList.remove('active'));
+      document.getElementById('tr-'+btn.dataset.tr).classList.add('active');
+      const id = btn.dataset.tr;
+      if(!initedTr.has(id)){
+        initedTr.add(id);
+        if(id==='age') initTrAge();
+        if(id==='marital') initTrMarital();
+        if(id==='income') initTrIncome();
         if(id==='children') initTrChildren();
         if(id==='region') initTrRegion();
         if(id==='occupation') initTrOccupation();
@@ -1590,6 +1735,393 @@ RENDERERS.trends = function(){
   });
 };
 
+
+// ============ DOWNLOAD CHARTS (PNG / CSV) ============
+function downloadChartPng(canvasId, filename){
+  const canvas = document.getElementById(canvasId);
+  if(!canvas){ alert('Không tìm thấy biểu đồ.'); return; }
+  const chart = (typeof Chart !== 'undefined' && Chart.getChart) ? Chart.getChart(canvas) : null;
+
+  const card = canvas.closest('.card');
+  const title = card && card.querySelector('h3') ? card.querySelector('h3').textContent.trim() : (filename || canvasId || '');
+  const subtitle = card && card.querySelector('.card-sub') ? card.querySelector('.card-sub').textContent.trim() : '';
+
+  // Vẽ lại ở DPI cao trên CHÍNH chart đang hiển thị → giữ nguyên legend / nhãn / trục đã chỉnh
+  const PIXEL_RATIO = 3;
+
+  function wrapText(ctx2, text, font, maxW){
+    ctx2.font = font;
+    const words = String(text || '').split(' ');
+    const lines = [];
+    let line = '';
+    words.forEach(w=>{
+      const test = line ? line + ' ' + w : w;
+      if(ctx2.measureText(test).width > maxW && line){ lines.push(line); line = w; }
+      else line = test;
+    });
+    if(line) lines.push(line);
+    return lines.length ? lines : [text || ''];
+  }
+
+  function composeAndDownload(srcCanvas){
+    const chartW = srcCanvas.width;
+    const chartH = srcCanvas.height;
+    const scale = PIXEL_RATIO;
+    const padX = 36 * scale;
+    const padTop = 28 * scale;
+    const padBottom = 28 * scale;
+    const titleSize = 18 * scale;
+    const subSize = 13 * scale;
+    const gap = 12 * scale;
+
+    const probe = document.createElement('canvas').getContext('2d');
+    const titleFont = '700 ' + titleSize + 'px -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif';
+    const subFont = '500 ' + subSize + 'px -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif';
+    const titleLines = wrapText(probe, title, titleFont, chartW);
+    const subLines = subtitle ? wrapText(probe, subtitle, subFont, chartW) : [];
+    const headerH = padTop
+      + titleLines.length * (titleSize + 5 * scale)
+      + subLines.length * (subSize + 4 * scale)
+      + 8 * scale
+      + gap;
+
+    const out = document.createElement('canvas');
+    out.width  = chartW + padX * 2;
+    out.height = chartH + headerH + padBottom;
+    const ctx = out.getContext('2d');
+    ctx.imageSmoothingEnabled = false;
+
+    ctx.fillStyle = '#FFFFFF';
+    ctx.fillRect(0, 0, out.width, out.height);
+
+    ctx.strokeStyle = '#E2EBEA';
+    ctx.lineWidth = 2 * scale;
+    ctx.strokeRect(scale, scale, out.width - 2 * scale, out.height - 2 * scale);
+
+    let y = padTop;
+    titleLines.forEach(ln=>{
+      ctx.fillStyle = '#132625';
+      ctx.font = titleFont;
+      ctx.textAlign = 'left';
+      ctx.textBaseline = 'top';
+      ctx.fillText(ln, padX, y);
+      y += titleSize + 5 * scale;
+    });
+    subLines.forEach(ln=>{
+      ctx.fillStyle = '#6B7C7A';
+      ctx.font = subFont;
+      ctx.textAlign = 'left';
+      ctx.textBaseline = 'top';
+      ctx.fillText(ln, padX, y);
+      y += subSize + 4 * scale;
+    });
+    y += 2 * scale;
+    ctx.strokeStyle = '#FFC62F';
+    ctx.lineWidth = 3 * scale;
+    ctx.beginPath();
+    ctx.moveTo(padX, y);
+    ctx.lineTo(padX + 56 * scale, y);
+    ctx.stroke();
+    y += gap;
+
+    ctx.drawImage(srcCanvas, padX, y);
+
+    const a = document.createElement('a');
+    a.href = out.toDataURL('image/png');
+    const safe = (filename || title || canvasId || 'bieu-do').replace(/[^\wÀ-ɏḀ-ỿ\- ]+/g,'').trim().slice(0,60) || canvasId;
+    a.download = safe + '.png';
+    document.body.appendChild(a); a.click(); a.remove();
+  }
+
+  function readCurrentSizes(c){
+    // Đọc cỡ đang áp dụng (ưu tiên biến tùy chỉnh, fallback options)
+    let leg = c.$legendFontSize;
+    let lab = c.$dlFontSize;
+    let ax  = c.$axisFontSize;
+    try{
+      if(leg == null){
+        const f = c.options && c.options.plugins && c.options.plugins.legend && c.options.plugins.legend.labels && c.options.plugins.legend.labels.font;
+        if(f && f.size != null) leg = f.size;
+      }
+      if(ax == null){
+        const scales = c.options && c.options.scales;
+        if(scales){
+          const first = scales.x || scales.y || Object.values(scales)[0];
+          if(first && first.ticks && first.ticks.font && first.ticks.font.size != null) ax = first.ticks.font.size;
+        }
+      }
+    }catch(_){}
+    return { legendSize: leg, labelSize: lab, axisSize: ax };
+  }
+
+  if(!chart){
+    composeAndDownload(canvas);
+    return;
+  }
+
+  // Lưu trạng thái gốc để khôi phục sau khi xuất
+  const cssW = canvas.clientWidth || Math.round(canvas.width / (chart.currentDevicePixelRatio || window.devicePixelRatio || 1));
+  const cssH = canvas.clientHeight || Math.round(canvas.height / (chart.currentDevicePixelRatio || window.devicePixelRatio || 1));
+  const orig = {
+    dprOpt: chart.options.devicePixelRatio,
+    styleW: canvas.style.width,
+    styleH: canvas.style.height,
+    width: canvas.width,
+    height: canvas.height,
+  };
+
+  try{
+    // 1) Áp lại cỡ Legend / Nhãn / Trục đang chọn trước khi vẽ
+    const sizes = readCurrentSizes(chart);
+    applyChartTextStyle(chart, {
+      legendSize: sizes.legendSize,
+      labelSize: sizes.labelSize,
+      axisSize: sizes.axisSize,
+    });
+
+    // 2) Ép render ở DPI cao trên chart hiện tại (giữ nguyên plugin + style)
+    chart.options.devicePixelRatio = PIXEL_RATIO;
+    canvas.style.width = cssW + 'px';
+    canvas.style.height = cssH + 'px';
+    chart.resize();
+    // update để plugin data-label đọc lại $dlFontSize và vẽ lại
+    chart.update('none');
+    chart.draw();
+
+    // 3) Xuất ảnh từ canvas vừa render nét + đúng style
+    composeAndDownload(canvas);
+  }catch(err){
+    console.warn('Export failed', err);
+    try{ composeAndDownload(canvas); }catch(_){}
+  }finally{
+    // 4) Khôi phục DPI & kích thước hiển thị trên dashboard
+    try{
+      if(orig.dprOpt === undefined){ delete chart.options.devicePixelRatio; }
+      else { chart.options.devicePixelRatio = orig.dprOpt; }
+      canvas.style.width = orig.styleW || (cssW + 'px');
+      canvas.style.height = orig.styleH || (cssH + 'px');
+      chart.resize();
+      chart.update('none');
+    }catch(e){ console.warn('Restore chart after export failed', e); }
+  }
+}
+
+
+function csvEscape(v){
+  const s = (v==null?'':String(v));
+  if(/[",\n\r]/.test(s)) return '"' + s.replace(/"/g,'""') + '"';
+  return s;
+}
+
+function downloadCsv(filename, rows){
+  const bom = '\uFEFF';
+  const body = rows.map(r => r.map(csvEscape).join(',')).join('\r\n');
+  const blob = new Blob([bom+body], {type:'text/csv;charset=utf-8;'});
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement('a');
+  a.href = url; a.download = filename.endsWith('.csv')?filename:filename+'.csv';
+  document.body.appendChild(a); a.click(); a.remove();
+  setTimeout(()=>URL.revokeObjectURL(url), 1500);
+}
+
+function chartDataToCsv(canvasId){
+  const chart = Chart.getChart(canvasId);
+  if(!chart){ alert('Không có dữ liệu biểu đồ.'); return; }
+  const labels = chart.data.labels || [];
+  const datasets = chart.data.datasets || [];
+  const header = ['Nhãn'].concat(datasets.map(d => d.label || 'Giá trị'));
+  const rows = [header];
+  labels.forEach((lab,i)=>{
+    rows.push([lab].concat(datasets.map(d => (d.data && d.data[i] != null) ? d.data[i] : '')));
+  });
+  downloadCsv((canvasId||'data') + '.csv', rows);
+}
+
+function attachDownloadButtons(root){
+  const scope = root || document;
+  scope.querySelectorAll('.card').forEach(card=>{
+    if(card.querySelector('.card-dl')) return;
+    const canvas = card.querySelector('canvas');
+    if(!canvas || !canvas.id) return;
+    const id = canvas.id;
+    const title = (card.querySelector('h3')||{}).textContent || id;
+    const safe = title.replace(/[^\w\u00C0-\u024F\u1E00-\u1EFF\- ]+/g,'').trim().slice(0,40) || id;
+    const chart = (typeof Chart !== 'undefined' && Chart.getChart) ? Chart.getChart(canvas) : null;
+
+    let legSize = CHART_STYLE_DEFAULTS.legend;
+    let labSize = CHART_STYLE_DEFAULTS.label;
+    let axSize  = CHART_STYLE_DEFAULTS.axis;
+
+    if(chart){
+      const legOpt = chart.options && chart.options.plugins && chart.options.plugins.legend;
+      if(legOpt && legOpt.labels && legOpt.labels.font && legOpt.labels.font.size){
+        legSize = legOpt.labels.font.size;
+      }
+      if(chart.$legendFontSize != null) legSize = chart.$legendFontSize;
+      if(chart.$dlFontSize != null) labSize = chart.$dlFontSize;
+      else if(chart.config && chart.config.type === 'doughnut') labSize = 11;
+      else if((chart.data.datasets||[]).length > 2) labSize = 8.5;
+      if(chart.$axisFontSize != null) axSize = chart.$axisFontSize;
+      else {
+        try{
+          const sc = chart.options && chart.options.scales;
+          if(sc){
+            const first = sc.x || sc.y || Object.values(sc)[0];
+            if(first && first.ticks && first.ticks.font && first.ticks.font.size){
+              axSize = first.ticks.font.size;
+            }
+          }
+        }catch(_){}
+      }
+    }
+
+    const bar = document.createElement('div');
+    bar.className = 'card-dl';
+    bar.innerHTML = `
+      <button type="button" class="dl-ico" title="Tải ảnh PNG" data-dl="png">📷</button>
+      <button type="button" class="dl-ico gold" title="Tải dữ liệu CSV (Excel)" data-dl="csv">📊</button>
+      <button type="button" class="dl-ico" title="Tùy chỉnh cỡ chữ" data-dl="style">Aa</button>
+      <div class="card-style" data-st-panel>
+        <div class="st-head">Cỡ chữ</div>
+        <div class="st-row">
+          <span class="lbl">Legend</span>
+          <button type="button" class="st-btn" data-st="leg-minus">−</button>
+          <span class="st-val" data-st="leg-val">${legSize}</span>
+          <button type="button" class="st-btn" data-st="leg-plus">+</button>
+        </div>
+        <div class="st-row">
+          <span class="lbl">Nhãn DL</span>
+          <button type="button" class="st-btn" data-st="lab-minus">−</button>
+          <span class="st-val" data-st="lab-val">${labSize}</span>
+          <button type="button" class="st-btn" data-st="lab-plus">+</button>
+        </div>
+        <div class="st-row">
+          <span class="lbl">Trục</span>
+          <button type="button" class="st-btn" data-st="ax-minus">−</button>
+          <span class="st-val" data-st="ax-val">${axSize}</span>
+          <button type="button" class="st-btn" data-st="ax-plus">+</button>
+        </div>
+      </div>`;
+
+    bar.querySelector('[data-dl="png"]').onclick = (e)=>{ e.stopPropagation(); downloadChartPng(id, safe); };
+    bar.querySelector('[data-dl="csv"]').onclick = (e)=>{ e.stopPropagation(); chartDataToCsv(id); };
+
+    const styleBtn = bar.querySelector('[data-dl="style"]');
+    const panel = bar.querySelector('[data-st-panel]');
+    styleBtn.onclick = (e)=>{
+      e.stopPropagation();
+      const open = panel.classList.toggle('open');
+      styleBtn.classList.toggle('active', open);
+      // đóng panel khác
+      document.querySelectorAll('.card-style.open').forEach(p=>{
+        if(p !== panel){ p.classList.remove('open'); const b=p.parentElement && p.parentElement.querySelector('[data-dl="style"]'); if(b) b.classList.remove('active'); }
+      });
+    };
+    panel.onclick = (e)=> e.stopPropagation();
+
+    function clamp(v, min, max){ return Math.max(min, Math.min(max, v)); }
+    function refreshVals(){
+      const c = Chart.getChart(canvas);
+      if(!c) return;
+      bar.querySelector('[data-st="leg-val"]').textContent = c.$legendFontSize != null ? c.$legendFontSize : legSize;
+      bar.querySelector('[data-st="lab-val"]').textContent = c.$dlFontSize != null ? c.$dlFontSize : labSize;
+      bar.querySelector('[data-st="ax-val"]').textContent  = c.$axisFontSize != null ? c.$axisFontSize : axSize;
+    }
+    function bump(kind, delta){
+      const c = Chart.getChart(canvas);
+      if(!c){ alert('Biểu đồ chưa sẵn sàng. Hãy đợi tải xong hoặc mở lại tab.'); return; }
+      if(kind === 'leg'){
+        const cur = c.$legendFontSize != null ? c.$legendFontSize : legSize;
+        const next = clamp(Math.round((+cur + delta) * 2) / 2, 8, 20);
+        applyChartTextStyle(c, {legendSize: next});
+        legSize = next;
+      } else if(kind === 'lab'){
+        const cur = c.$dlFontSize != null ? c.$dlFontSize : labSize;
+        const next = clamp(Math.round((+cur + delta) * 2) / 2, 7, 22);
+        applyChartTextStyle(c, {labelSize: next});
+        labSize = next;
+      } else {
+        const cur = c.$axisFontSize != null ? c.$axisFontSize : axSize;
+        const next = clamp(Math.round((+cur + delta) * 2) / 2, 7, 20);
+        applyChartTextStyle(c, {axisSize: next});
+        axSize = next;
+      }
+      refreshVals();
+    }
+    bar.querySelector('[data-st="leg-minus"]').onclick = ()=> bump('leg', -0.5);
+    bar.querySelector('[data-st="leg-plus"]').onclick  = ()=> bump('leg', +0.5);
+    bar.querySelector('[data-st="lab-minus"]').onclick = ()=> bump('lab', -0.5);
+    bar.querySelector('[data-st="lab-plus"]').onclick  = ()=> bump('lab', +0.5);
+    bar.querySelector('[data-st="ax-minus"]').onclick  = ()=> bump('ax', -0.5);
+    bar.querySelector('[data-st="ax-plus"]').onclick   = ()=> bump('ax', +0.5);
+    card.appendChild(bar);
+  });
+}
+
+// Đóng panel style khi click ra ngoài
+if(!window.__bidvStylePanelClose){
+  window.__bidvStylePanelClose = true;
+  document.addEventListener('click', function(){
+    document.querySelectorAll('.card-style.open').forEach(p=>{
+      p.classList.remove('open');
+      const b = p.parentElement && p.parentElement.querySelector('[data-dl="style"]');
+      if(b) b.classList.remove('active');
+    });
+  });
+}
+
+function exportAllKpiCsv(){
+  const k = DATA.kpi;
+  const rows = [
+    ['Chỉ tiêu','Giá trị'],
+    ['Số KH khảo sát', k.N],
+    ['Hài lòng / rất HL sản phẩm (%)', k.satisfaction_pct],
+    ['Sẵn sàng NH số (%)', k.digital_ready_pct],
+    ['GD thêm NH khác (%)', k.multibank_pct],
+    ['Tuổi trung bình', k.age_mean],
+    ['Không HL ≥1 mặt (%)', k.unsat_pct],
+    ['Số KH không HL ≥1 mặt', k.unsat_n],
+    ['TK thanh toán tích cực (%)', k.account_pct],
+    ['Kế hoạch mua nhà (%)', k.buy_house_pct],
+    ['YT chọn SP: An toàn bảo mật (%)', k.factor_safety_pct],
+    ['Tư vấn ưa thích: Gặp trực tiếp (%)', k.advisory_face_pct],
+    ['Hiểu biết TC cao/rất cao (%)', k.high_lit_pct],
+    ['Rất quan tâm crypto (%)', k.crypto_pct],
+  ];
+  downloadCsv('KPI_BIDV_KhaoSat.csv', rows);
+}
+
+function exportDemographicsCsv(){
+  const rows = [['Nhóm','Phân loại','Số lượng']];
+  const blocks = [
+    ['Độ tuổi', DATA.age],
+    ['Thu nhập', DATA.income],
+    ['Giới tính', DATA.gender],
+    ['Hôn nhân', DATA.marital],
+    ['Số con', DATA.children],
+    ['Khu vực', DATA.region],
+  ].filter(x => x[1] && x[1].labels && x[1].values);
+  blocks.forEach(([name, obj])=>{
+    if(!obj || !obj.labels) return;
+    obj.labels.forEach((lab,i)=> rows.push([name, lab, obj.values[i]]));
+  });
+  if(DATA.province_labels){
+    DATA.province_labels.forEach((lab,i)=> rows.push(['Tỉnh/TP', lab, DATA.province_values[i]]));
+  }
+  downloadCsv('NhanKhauHoc_BIDV_KhaoSat.csv', rows);
+}
+
+
+
+// Gắn lại nút tải khi đổi phân khúc (seg-btn)
+document.addEventListener('click', function(e){
+  const btn = e.target.closest && e.target.closest('.seg-btn');
+  if(!btn) return;
+  setTimeout(()=>{
+    const panel = btn.closest('section.panel') || document.querySelector('section.panel.active');
+    if(panel) attachDownloadButtons(panel);
+  }, 120);
+}, true);
 
 // ============ PASSWORD GATE ============
 (function(){
@@ -1627,6 +2159,26 @@ renderKPIs();
 renderTabButtons();
 RENDERERS.overview();
 initedTabs.add('overview');
+setTimeout(()=> attachDownloadButtons(document.getElementById('panel-overview')), 100);
+
+// Toolbar tải dữ liệu tổng (CSV mở bằng Excel)
+(function(){
+  const wrap = document.querySelector('.wrap') || document.body;
+  if(document.getElementById('dlToolbar')) return;
+  const bar = document.createElement('div');
+  bar.className = 'dl-toolbar';
+  bar.id = 'dlToolbar';
+  bar.innerHTML = `
+    <button type="button" onclick="exportAllKpiCsv()">📊 Tải KPI (Excel/CSV)</button>
+    <button type="button" class="gold-btn" onclick="exportDemographicsCsv()">📋 Tải Nhân khẩu học (Excel/CSV)</button>
+    <button type="button" onclick="document.querySelectorAll('.card canvas').forEach((cv,i)=>setTimeout(()=>downloadChartPng(cv.id, cv.id), i*200))">📷 Tải tất cả biểu đồ tab hiện tại (PNG)</button>`;
+  const firstPanel = document.getElementById('panel-overview');
+  if(firstPanel && firstPanel.parentNode){
+    firstPanel.parentNode.insertBefore(bar, firstPanel);
+  } else {
+    wrap.insertBefore(bar, wrap.firstChild);
+  }
+})();
 
 </script>
 </body>
