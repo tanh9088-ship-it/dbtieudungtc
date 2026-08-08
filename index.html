@@ -2688,6 +2688,14 @@ document.addEventListener('click', function(e){
 
 // ============ PDF EXPORT ============
 const PDF_TAB_TITLES = {
+  overview: 'Tong quan',
+  demo: 'Nhan khau hoc',
+  products: 'San pham & Kenh',
+  satisfaction: 'Hai long & Chap nhan so',
+  segments: 'Phan khuc khach hang',
+  trends: 'Xu huong & Y kien KH'
+};
+const PDF_TAB_TITLES_VI = {
   overview: 'Tổng quan',
   demo: 'Nhân khẩu học',
   products: 'Sản phẩm & Kênh',
@@ -2704,24 +2712,64 @@ function waitFrames(n){
   });
 }
 
+function waitMs(ms){
+  return new Promise(r => setTimeout(r, ms));
+}
+
 async function switchTabForPdf(id){
-  // Activate tab without relying only on click
-  document.querySelectorAll('.tab-btn').forEach(b=> b.classList.toggle('active', b.dataset.tab===id));
-  document.querySelectorAll('section.panel').forEach(p=> p.classList.toggle('active', p.id==='panel-'+id));
+  document.querySelectorAll('.tab-btn').forEach(b => b.classList.toggle('active', b.dataset.tab === id));
+  document.querySelectorAll('section.panel').forEach(p => p.classList.toggle('active', p.id === 'panel-' + id));
   if(!initedTabs.has(id)){
     initedTabs.add(id);
     if(RENDERERS[id]) RENDERERS[id]();
   }
-  setTimeout(()=> attachDownloadButtons(document.getElementById('panel-'+id)), 30);
-  await waitFrames(8);
-  // Resize charts in panel
-  const panel = document.getElementById('panel-'+id);
+  await waitMs(80);
+  attachDownloadButtons(document.getElementById('panel-' + id));
+  await waitFrames(6);
+  const panel = document.getElementById('panel-' + id);
   if(panel){
     panel.querySelectorAll('canvas').forEach(cv=>{
       try{ const ch = Chart.getChart(cv); if(ch){ ch.resize(); ch.update('none'); } }catch(e){}
     });
   }
   await waitFrames(4);
+}
+
+/** Bật một phân khúc (seg-btn) trong panel và đợi chart render */
+async function switchSegForPdf(panel, btn){
+  if(!btn || !panel) return;
+  // Click để kích hoạt logic init sẵn có
+  btn.click();
+  await waitMs(100);
+  await waitFrames(8);
+  panel.querySelectorAll('.seg-view.active canvas, canvas').forEach(cv=>{
+    try{ const ch = Chart.getChart(cv); if(ch){ ch.resize(); ch.update('none'); } }catch(e){}
+  });
+  await waitFrames(4);
+  if(window.__applyChartWatermarks) window.__applyChartWatermarks();
+}
+
+/** Xuất canvas Chart.js ra PNG độ phân giải cao (sắc nét) */
+function chartToHiResPng(canvas){
+  const chart = (typeof Chart !== 'undefined' && Chart.getChart) ? Chart.getChart(canvas) : null;
+  if(chart && chart.toBase64Image){
+    // Chart.js xuất PNG; tăng DPR tạm thời nếu có thể
+    try{
+      const prev = chart.options.devicePixelRatio;
+      chart.options.devicePixelRatio = Math.max(2, window.devicePixelRatio || 1) * 2;
+      chart.resize();
+      chart.draw();
+      const url = chart.toBase64Image('image/png', 1);
+      if(prev === undefined) delete chart.options.devicePixelRatio;
+      else chart.options.devicePixelRatio = prev;
+      chart.resize();
+      chart.draw();
+      return url;
+    }catch(e){
+      return chart.toBase64Image('image/png', 1);
+    }
+  }
+  try{ return canvas.toDataURL('image/png'); }catch(e){ return null; }
 }
 
 async function exportDashboardToPdf(scope){
@@ -2733,7 +2781,6 @@ async function exportDashboardToPdf(scope){
   const overlay = document.getElementById('pdfExportOverlay');
   const bar = document.getElementById('pdfExportBar');
   const msg = document.getElementById('pdfExportMsg');
-  const titleEl = document.getElementById('pdfExportTitle');
   function progress(pct, text){
     if(bar) bar.style.width = Math.min(100, pct) + '%';
     if(msg) msg.textContent = text || '';
@@ -2742,98 +2789,250 @@ async function exportDashboardToPdf(scope){
   document.body.classList.add('pdf-exporting');
   progress(2, 'Chuẩn bị…');
 
-  const allIds = TABS.map(t=>t.id);
+  const allIds = TABS.map(t => t.id);
   const tabIds = (scope === 'all') ? allIds : [scope];
-  const original = (document.querySelector('.tab-btn.active') || {}).dataset
-    ? document.querySelector('.tab-btn.active').dataset.tab
-    : 'overview';
+  const activeBtn = document.querySelector('.tab-btn.active');
+  const original = (activeBtn && activeBtn.dataset.tab) ? activeBtn.dataset.tab : 'overview';
+  // Lưu seg đang chọn theo panel
+  const origSeg = {};
+  document.querySelectorAll('section.panel').forEach(p=>{
+    const a = p.querySelector('.seg-btn.active');
+    if(a) origSeg[p.id] = a;
+  });
 
-  const pdf = new jsPDF({ orientation: 'landscape', unit: 'mm', format: 'a4' });
+  const pdf = new jsPDF({ orientation: 'landscape', unit: 'mm', format: 'a4', compress: true });
   const pageW = pdf.internal.pageSize.getWidth();
   const pageH = pdf.internal.pageSize.getHeight();
-  const margin = 10;
+  const margin = 6;
+  const headerH = 7;   // mm — gọn sát đầu trang
+  const footerH = 7;   // mm — gọn sát cuối trang
   const usableW = pageW - margin * 2;
-  const usableH = pageH - margin * 2 - 6;
+  const usableH = pageH - margin * 2 - headerH - footerH;
   let pageNum = 1;
-  let cursorY = margin;
+  let cursorY = margin + headerH + 1.5;
   let pageHasContent = false;
-  const gap = 4;
-  const MAX_CHARTS = 4;
+  const gap = 3;
 
-  function newPage(){
-    if(pageHasContent){ pdf.addPage(); pageNum++; }
-    pageHasContent = false;
-    cursorY = margin;
+  // Header / footer tối giản: chữ + đường kẻ vàng (html2canvas để giữ tiếng Việt)
+  let headerImg = null, footerImg = null;
+  async function buildHeaderFooterImages(){
+    async function renderStrip(html, widthPx){
+      const el = document.createElement('div');
+      el.style.cssText = 'position:fixed;left:-14000px;top:0;width:'+widthPx+'px;box-sizing:border-box;background:#ffffff;font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,sans-serif;';
+      el.innerHTML = html;
+      document.body.appendChild(el);
+      try{
+        const cv = await html2canvas(el, { scale: 2.5, backgroundColor: '#ffffff', logging: false });
+        const data = cv.toDataURL('image/png');
+        el.remove();
+        return { data, w: cv.width, h: cv.height };
+      }catch(e){ el.remove(); return null; }
+    }
+    headerImg = await renderStrip(
+      '<div style="padding:2px 4px 0;">'
+      + '<div style="font-size:13px;font-weight:700;color:#006B68;line-height:1.2;">Báo cáo người tiêu dùng tài chính BIDV</div>'
+      + '<div style="margin-top:4px;height:2px;background:#FFC62F;width:100%;"></div>'
+      + '</div>',
+      1400
+    );
+    footerImg = await renderStrip(
+      '<div style="padding:0 4px 2px;">'
+      + '<div style="height:2px;background:#FFC62F;width:100%;margin-bottom:3px;"></div>'
+      + '<div style="font-size:11px;font-weight:600;color:#006B68;line-height:1.2;">Viện NCKT BIDV phối hợp Viện Tài chính Hana</div>'
+      + '</div>',
+      1400
+    );
+  }
+  function stampHeaderFooter(){
+    // Sát lề trên / dưới
+    if(headerImg){
+      try{ pdf.addImage(headerImg.data, 'PNG', margin, 3, usableW, headerH, undefined, 'FAST'); }catch(e){}
+    }
+    if(footerImg){
+      try{ pdf.addImage(footerImg.data, 'PNG', margin, pageH - footerH - 3, usableW, footerH, undefined, 'FAST'); }catch(e){}
+    }
+    pdf.setFont('helvetica', 'normal');
+    pdf.setFontSize(6.5);
+    pdf.setTextColor(130);
+    pdf.text(String(pageNum), pageW - margin, pageH - 2.5, { align: 'right' });
   }
   function footer(){
-    pdf.setFontSize(7); pdf.setTextColor(120);
-    pdf.text('BIDV · Dashboard khảo sát tiêu dùng tài chính · Trang ' + pageNum, pageW - margin, pageH - 4, {align:'right'});
+    stampHeaderFooter();
   }
-  function placeImg(data, wpx, hpx){
-    let wMM = usableW;
-    let hMM = (hpx / wpx) * wMM;
-    if(hMM > usableH){ const s = usableH / hMM; hMM = usableH; wMM *= s; }
-    if(pageHasContent && cursorY + hMM > pageH - margin){ footer(); newPage(true); pageHasContent=false; cursorY=margin; }
-    // force new page flag
-    if(pageHasContent && cursorY + hMM > pageH - margin){
-      footer(); pdf.addPage(); pageNum++; cursorY = margin; pageHasContent = false;
+  function ensureSpace(hMM){
+    if(pageHasContent && cursorY + hMM > pageH - margin - footerH - 2){
+      stampHeaderFooter();
+      pdf.addPage();
+      pageNum++;
+      cursorY = margin + headerH + 1.5;
+      pageHasContent = false;
     }
+  }
+  function placePng(dataUrl, wpx, hpx, maxHfrac){
+    if(!dataUrl) return;
+    const maxH = usableH * (maxHfrac || 0.92);
+    let wMM = usableW;
+    let hMM = (hpx / Math.max(wpx, 1)) * wMM;
+    if(hMM > maxH){ const s = maxH / hMM; hMM = maxH; wMM = wMM * s; }
+    // Không phóng quá lớn so với kích thước gốc (tránh chart "phình" mờ)
+    const maxWfromPx = (wpx / 3.78); // ~96dpi-ish mm, nới với scale hi-res
+    if(wMM > maxWfromPx && maxWfromPx > usableW * 0.45){
+      const s = Math.min(1, (usableW * 0.92) / wMM);
+      // giữ gần full width nhưng không vượt quá cao
+    }
+    if(hMM > usableH * 0.55){
+      // giới hạn chiều cao 1 chart ~55% trang để không quá to
+      const s = (usableH * 0.55) / hMM;
+      hMM *= s;
+      wMM *= s;
+    }
+    ensureSpace(hMM);
     const x = margin + (usableW - wMM) / 2;
-    pdf.addImage(data, 'JPEG', x, cursorY, wMM, hMM);
+    try{
+      pdf.addImage(dataUrl, 'PNG', x, cursorY, wMM, hMM, undefined, 'FAST');
+    }catch(e){
+      // fallback jpeg
+      try{ pdf.addImage(dataUrl, 'JPEG', x, cursorY, wMM, hMM); }catch(e2){ console.warn(e2); }
+    }
     cursorY += hMM + gap;
     pageHasContent = true;
   }
 
+  /** Vẽ tiêu đề tiếng Việt bằng html2canvas (tránh lỗi font jsPDF) */
+  async function placeViTitle(text, sub){
+    const el = document.createElement('div');
+    el.style.cssText = 'position:fixed;left:-12000px;top:0;width:1100px;background:#006B68;color:#fff;padding:12px 18px;font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,sans-serif;border-radius:8px;box-sizing:border-box;';
+    el.innerHTML = '<div style="font-size:20px;font-weight:700;line-height:1.25;">'+text+'</div>'
+      + (sub ? '<div style="font-size:13px;opacity:.92;margin-top:4px;font-weight:500;">'+sub+'</div>' : '');
+    document.body.appendChild(el);
+    try{
+      const cv = await html2canvas(el, { scale: 2, backgroundColor: null, logging: false });
+      placePng(cv.toDataURL('image/png'), cv.width, cv.height, 0.2);
+    }catch(e){ console.warn(e); }
+    el.remove();
+  }
+
+  async function captureCard(card){
+    // Ưu tiên canvas Chart → PNG hi-res; ghép tiêu đề h3
+    const canvas = card.querySelector('canvas');
+    const h3 = card.querySelector('h3');
+    const sub = card.querySelector('.card-sub');
+    if(canvas && Chart.getChart && Chart.getChart(canvas)){
+      // render title strip + chart
+      const wrap = document.createElement('div');
+      wrap.style.cssText = 'position:fixed;left:-12000px;top:0;width:960px;background:#fff;padding:14px 16px 10px;box-sizing:border-box;font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif;';
+      if(h3){
+        const t = document.createElement('div');
+        t.style.cssText = 'font-size:16px;font-weight:700;color:#132625;margin-bottom:4px;';
+        t.textContent = h3.textContent;
+        wrap.appendChild(t);
+      }
+      if(sub){
+        const s = document.createElement('div');
+        s.style.cssText = 'font-size:12px;color:#6B7C7A;margin-bottom:8px;';
+        s.textContent = sub.textContent;
+        wrap.appendChild(s);
+      }
+      const img = document.createElement('img');
+      img.style.cssText = 'width:100%;height:auto;display:block;';
+      const png = chartToHiResPng(canvas);
+      if(!png){ wrap.remove(); return null; }
+      img.src = png;
+      wrap.appendChild(img);
+      document.body.appendChild(wrap);
+      await waitFrames(3);
+      try{
+        const cv = await html2canvas(wrap, { scale: 2, backgroundColor: '#ffffff', logging: false, useCORS: true });
+        wrap.remove();
+        return { data: cv.toDataURL('image/png'), w: cv.width, h: cv.height };
+      }catch(e){
+        wrap.remove();
+        return { data: png, w: canvas.width || 800, h: canvas.height || 400 };
+      }
+    }
+    // fallback whole card
+    try{
+      const cv = await html2canvas(card, { scale: 2, backgroundColor: '#ffffff', logging: false, useCORS: true });
+      return { data: cv.toDataURL('image/png'), w: cv.width, h: cv.height };
+    }catch(e){ return null; }
+  }
+
   try{
+    progress(3, 'Tạo header / footer…');
+    await buildHeaderFooterImages();
     for(let ti = 0; ti < tabIds.length; ti++){
       const tabId = tabIds[ti];
-      const label = PDF_TAB_TITLES[tabId] || tabId;
-      progress(5 + (ti / tabIds.length) * 90, 'Tab ' + (ti+1) + '/' + tabIds.length + ': ' + label);
+      const labelVi = PDF_TAB_TITLES_VI[tabId] || tabId;
+      progress(4 + (ti / tabIds.length) * 92, 'Tab ' + (ti+1) + '/' + tabIds.length + ': ' + labelVi);
       await switchTabForPdf(tabId);
 
-      if(pageHasContent){ footer(); pdf.addPage(); pageNum++; cursorY = margin; pageHasContent = false; }
-
-      // Title banner
-      pdf.setFillColor(0, 107, 104);
-      pdf.roundedRect(margin, cursorY, usableW, 9, 1.5, 1.5, 'F');
-      pdf.setTextColor(255); pdf.setFontSize(12);
-      pdf.text('Khảo sát tiêu dùng TC – ' + label, margin + 3, cursorY + 6.2);
-      cursorY += 12; pageHasContent = true;
+      if(pageHasContent){ footer(); pdf.addPage(); pageNum++; cursorY = margin + headerH + 1.5; pageHasContent = false; }
+      await placeViTitle('Dashboard khảo sát tiêu dùng tài chính — ' + labelVi, 'Viện NCKT BIDV · Dữ liệu khảo sát');
 
       const panel = document.getElementById('panel-' + tabId);
       if(!panel) continue;
 
-      // Capture KPI only on overview first page of full export or overview tab
       if(tabId === 'overview'){
         const kpi = document.getElementById('kpiStrip');
         if(kpi){
           try{
-            const cv = await html2canvas(kpi, {scale: 1.5, backgroundColor: '#ffffff', logging: false});
-            placeImg(cv.toDataURL('image/jpeg', 0.92), cv.width, cv.height);
+            const cv = await html2canvas(kpi, { scale: 2, backgroundColor: '#ffffff', logging: false });
+            placePng(cv.toDataURL('image/png'), cv.width, cv.height, 0.35);
           }catch(e){ console.warn(e); }
         }
       }
 
-      const cards = Array.from(panel.querySelectorAll('.card')).filter(card => card.querySelector('canvas'));
-      // Also capture insight blocks as text images optionally - skip for size
-      for(let ci = 0; ci < cards.length; ci++){
-        progress(5 + ((ti + (ci+1)/Math.max(cards.length,1)) / tabIds.length) * 90,
-          label + ' · biểu đồ ' + (ci+1) + '/' + cards.length);
-        const card = cards[ci];
-        try{
-          const cv = await html2canvas(card, {scale: 1.6, backgroundColor: '#ffffff', logging: false, useCORS: true});
-          placeImg(cv.toDataURL('image/jpeg', 0.92), cv.width, cv.height);
-        }catch(e){ console.warn('capture card', e); }
+      // Các nút phân khúc trong tab (nếu có)
+      const segBtns = Array.from(panel.querySelectorAll('.seg-toggle .seg-btn'));
+      const targets = segBtns.length ? segBtns : [null];
+
+      for(let si = 0; si < targets.length; si++){
+        const sbtn = targets[si];
+        if(sbtn){
+          const segLabel = (sbtn.textContent || '').trim();
+          progress(
+            4 + ((ti + (si + 0.5) / targets.length) / tabIds.length) * 92,
+            labelVi + ' · ' + segLabel
+          );
+          await switchSegForPdf(panel, sbtn);
+          await placeViTitle(labelVi + '  ·  ' + segLabel, 'Phân loại khách hàng');
+        }
+
+        // Chỉ lấy card đang hiển thị trong seg-view active (hoặc toàn panel nếu không có seg)
+        let cards = [];
+        const activeView = panel.querySelector('.seg-view.active');
+        if(activeView){
+          cards = Array.from(activeView.querySelectorAll('.card')).filter(card => card.querySelector('canvas'));
+        } else {
+          cards = Array.from(panel.querySelectorAll('.card')).filter(card => card.querySelector('canvas'));
+        }
+        // Một số tab không dùng seg-view cho tất cả chart (quotes etc.) — bỏ qua non-canvas
+
+        for(let ci = 0; ci < cards.length; ci++){
+          progress(
+            4 + ((ti + (si + (ci+1)/Math.max(cards.length,1)) / targets.length) / tabIds.length) * 92,
+            labelVi + (sbtn ? ' · ' + (sbtn.textContent||'').trim() : '') + ' · ' + (ci+1) + '/' + cards.length
+          );
+          const cap = await captureCard(cards[ci]);
+          if(cap) placePng(cap.data, cap.w, cap.h, 0.6);
+        }
       }
     }
+
     if(pageHasContent) footer();
+
+    // Khôi phục tab + seg
     await switchTabForPdf(original);
+    Object.keys(origSeg).forEach(pid=>{
+      try{ origSeg[pid].click(); }catch(e){}
+    });
+    await waitMs(80);
+
     progress(100, 'Tải file…');
     const today = new Date();
     const ymd = today.getFullYear() + String(today.getMonth()+1).padStart(2,'0') + String(today.getDate()).padStart(2,'0');
     const scopeLabel = scope === 'all' ? 'TatCa' : (PDF_TAB_TITLES[scope] || scope);
-    const safe = scopeLabel.normalize('NFD').replace(/[\u0300-\u036f]/g,'').replace(/đ/g,'d').replace(/Đ/g,'D').replace(/[^\w]+/g,'_');
-    pdf.save('Dashboard_KhaoSat_TC_' + safe + '_' + ymd + '.pdf');
+    pdf.save('Dashboard_KhaoSat_TC_' + scopeLabel + '_' + ymd + '.pdf');
   }catch(err){
     console.error(err);
     alert('Xuất PDF thất bại: ' + (err && err.message ? err.message : err));
@@ -2843,8 +3042,6 @@ async function exportDashboardToPdf(scope){
     setTimeout(()=>{ if(overlay) overlay.classList.remove('show'); }, 350);
   }
 }
-
-
 
 // ============ WATERMARK chỉ trên biểu đồ ============
 (function(){
@@ -2904,6 +3101,13 @@ async function exportDashboardToPdf(scope){
   };
 
   window.__toggleWatermark = function(){
+    // Bắt buộc mật khẩu khi ẩn/hiện watermark (mặc định đang hiện)
+    const pw = window.prompt('Nhập mật khẩu để ẩn/hiện watermark:');
+    if(pw === null) return;
+    if(String(pw).trim() !== 'free'){
+      alert('Mật khẩu không đúng.');
+      return;
+    }
     on = !on;
     try{ localStorage.setItem(KEY, on ? '1' : '0'); }catch(e){}
     window.__applyChartWatermarks();
