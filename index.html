@@ -4,6 +4,10 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>Dashboard Khảo sát người tiêu dùng Tài chính - Viện NCKT BIDV phối hợp Viện Tài chính Hana</title>
+
+<script src="https://cdn.jsdelivr.net/npm/jspdf@2.5.2/dist/jspdf.umd.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/html2canvas@1.4.1/dist/html2canvas.min.js"></script>
+
 <script>
 /*!
  * Chart.js v4.4.4
@@ -322,11 +326,129 @@ table.mini tr:nth-child(even) td{background:var(--gold-tint);}
 .lock-box button{margin-top:14px;width:100%;padding:12px;border:none;border-radius:10px;background:#006B68;color:#fff;font-size:14px;font-weight:700;cursor:pointer;}
 .lock-box button:hover{background:#008a86;}
 .lock-err{color:#c0392b;font-size:12.5px;margin-top:10px;min-height:18px;font-weight:600;}
-body.locked > *:not(#lock-screen){visibility:hidden !important;}
+body.locked > *:not(#lock-screen):not(#pdfExportOverlay){visibility:hidden !important; pointer-events:none !important;}
+body:not(.locked) > #lock-screen.hidden{display:none !important;}
+
+
+
+.card-style{
+  display:none;
+  position:absolute; top:32px; right:0;
+  flex-direction:column; gap:4px;
+  min-width:230px; max-width:280px; max-height:70vh; overflow-y:auto;
+  padding:10px 12px;
+  background:#fff;
+  border:1px solid #d5e3e1;
+  border-radius:10px;
+  box-shadow:0 8px 24px rgba(19,38,37,0.14), 0 1px 3px rgba(0,0,0,0.06);
+  z-index:20;
+}
+.card-style.open{ display:flex; }
+.card-style .st-head{
+  font-size:10px; font-weight:700; color:var(--teal);
+  text-transform:uppercase; letter-spacing:.04em;
+  margin-bottom:4px;
+}
+.card-style .st-sep{
+  border-top:1px solid #e2ebea; margin:6px 0 4px; padding-top:6px;
+  font-size:10px; font-weight:700; color:var(--teal);
+  text-transform:uppercase; letter-spacing:.03em;
+}
+.card-style .st-row{
+  display:flex; align-items:center; gap:5px;
+  font-size:11px; font-weight:600; color:#5B6B6A;
+  margin-bottom:3px;
+}
+.card-style .st-row span.lbl{ min-width:58px; flex:1; white-space:nowrap; }
+.card-style .st-val{ min-width:28px; text-align:center; font-weight:700; color:#132625; }
+.card-style button.st-btn{
+  border:1px solid #d5e3e1; background:#f7faf9; color:var(--teal);
+  width:24px; height:24px; border-radius:5px; cursor:pointer;
+  font-size:13px; line-height:1; display:inline-flex; align-items:center; justify-content:center;
+}
+.card-style button.st-btn:hover{ background:var(--teal); color:#fff; border-color:var(--teal); }
+.card-style .st-filter-list{
+  max-height:130px; overflow:auto; font-size:11px; font-weight:500;
+}
+.card-style .st-filter-list label{
+  display:flex; align-items:center; gap:5px; margin:2px 0; cursor:pointer; color:#3a4a48;
+}
+.card-style .st-quick{ display:flex; flex-wrap:wrap; gap:4px; margin-top:4px; }
+.card-style .st-quick button{
+  width:auto!important; padding:2px 7px!important; font-size:10px!important; height:auto!important;
+}
+.pdf-overlay{
+  display:none; position:fixed; inset:0; z-index:100000;
+  background:rgba(0,0,0,.55); align-items:center; justify-content:center;
+}
+.pdf-overlay.show{ display:flex; }
+.pdf-overlay .box{
+  background:#fff; border-radius:12px; padding:1.4rem 1.8rem; min-width:280px;
+  text-align:center; box-shadow:0 12px 40px rgba(0,0,0,.3);
+}
+.pdf-overlay .bar{ height:6px; background:#e2ebe9; border-radius:4px; margin-top:12px; overflow:hidden; }
+.pdf-overlay .bar > div{ height:100%; width:0%; background:#006B68; transition:width .25s; }
+.pdf-exporting .card-dl, .pdf-exporting .card-style, .pdf-exporting .dl-toolbar{ display:none!important; }
+.dl-toolbar .pdf-wrap{ position:relative; display:inline-block; }
+.dl-toolbar .pdf-menu{
+  display:none; position:absolute; top:100%; right:0; margin-top:4px;
+  background:#fff; border:1px solid #d5e3e1; border-radius:10px;
+  box-shadow:0 8px 24px rgba(0,0,0,.12); min-width:200px; z-index:30; padding:6px 0;
+}
+.dl-toolbar .pdf-menu.open{ display:block; }
+.dl-toolbar .pdf-menu button{
+  display:block; width:100%; text-align:left; border:none; background:none;
+  padding:8px 14px; font-size:12.5px; font-weight:600; color:#3a4a48; cursor:pointer;
+  box-shadow:none; border-radius:0;
+}
+.dl-toolbar .pdf-menu button:hover{ background:#f0f7f6; color:var(--teal); }
+
+
+/* Watermark chỉ trên biểu đồ */
+.chart-box{ position: relative; }
+.chart-wm{
+  pointer-events:none;
+  position:absolute;
+  inset:0;
+  z-index:4;
+  overflow:hidden;
+  display:none;
+  border-radius:inherit;
+}
+body.wm-charts-on .chart-box > .chart-wm{ display:block; }
+.chart-wm span{
+  position:absolute;
+  font-size:12px;
+  font-weight:700;
+  color:rgba(255,198,47,0.20);
+  white-space:nowrap;
+  transform:rotate(-28deg);
+  letter-spacing:0.03em;
+  user-select:none;
+}
+.st-swatches{ display:flex; flex-wrap:wrap; gap:5px; margin-top:4px; }
+.st-swatch{
+  width:22px; height:22px; border-radius:5px; border:2px solid #fff;
+  box-shadow:0 0 0 1px #c5d5d3; cursor:pointer; padding:0;
+}
+.st-swatch:hover, .st-swatch.active{ box-shadow:0 0 0 2px var(--teal); }
+.st-color-row{ display:flex; align-items:center; gap:6px; margin:4px 0; font-size:11px; }
+.st-color-row input[type=color]{
+  width:28px; height:22px; border:1px solid #d5e3e1; border-radius:4px; padding:0; cursor:pointer;
+}
 
 </style>
 </head>
 <body class="locked">
+<div id="pdfExportOverlay" class="pdf-overlay">
+  <div class="box">
+    <div style="font-size:1.4rem;margin-bottom:.35rem;">📄</div>
+    <div style="font-weight:700;color:#132625;" id="pdfExportTitle">Đang tạo báo cáo PDF…</div>
+    <div style="font-size:.82rem;color:#6B7C7A;margin-top:.3rem;" id="pdfExportMsg">Vui lòng chờ</div>
+    <div class="bar"><div id="pdfExportBar"></div></div>
+  </div>
+</div>
+
 
 <div id="lock-screen">
   <div class="lock-box">
@@ -367,7 +489,7 @@ body.locked > *:not(#lock-screen){visibility:hidden !important;}
     Dashboard được xây dựng từ kết quả khảo sát khách hàng · Đây là sản phẩm nghiên cứu hợp tác giữa Viện NCKT BIDV và Viện Tài chính Hana
 
 <script>
-const DATA = {"N": 3470, "cross_reg_occ": {"region": {"labels": ["Miền Bắc", "Miền Trung", "Miền Nam"], "n": [1117, 1022, 1331], "unsat": [9.1, 10.1, 11.5], "dig_ready": [59.2, 61.3, 59.4], "multibank": [67.9, 66.7, 61.9], "products": {"labels": ["tài khoản thanh toán", "Tiền gửi VND", "Tiền gửi ngoại tệ", "Thẻ tín dụng", "Thẻ ghi nợ", "Vay tín chấp", "Vay thế chấp", "Bảo hiểm nhân thọ"], "series": {"Miền Bắc": [95.4, 77.8, 19.6, 55.0, 44.9, 33.1, 41.9, 37.1], "Miền Trung": [95.8, 81.0, 21.5, 55.7, 49.9, 38.3, 47.2, 37.5], "Miền Nam": [96.4, 81.4, 19.0, 58.4, 51.0, 33.9, 46.6, 37.9], "Toàn mẫu": [95.9, 80.1, 19.9, 56.5, 48.7, 34.9, 45.2, 37.5]}}, "goals": {"labels": ["Mua nhà", "Đầu tư tài chính", "Khởi nghiệp / mở rộng KD", "Trả nợ", "Du học", "Nghỉ hưu"], "series": {"Toàn mẫu": [47.6, 46.3, 27.8, 24.3, 18.0, 8.8], "Miền Bắc": [50.2, 48.8, 25.4, 24.8, 17.7, 7.5], "Miền Trung": [48.0, 46.6, 26.0, 24.8, 18.6, 8.7], "Miền Nam": [45.2, 43.9, 31.0, 23.4, 17.7, 10.0]}}}, "occupation": {"labels": ["Chuyên viên/KT", "KD tự do", "Quản lý", "Sinh viên", "Chuyên gia", "Nội trợ", "Nghỉ hưu/TN", "Khác"], "labels_full": ["Chuyên viên, kỹ thuật viên", "Kinh doanh tự do", "Quản lý", "Sinh viên", "Chuyên gia", "Nội trợ", "Thất nghiệp/đã nghỉ hưu", "Khác"], "n": [1037, 893, 537, 182, 127, 110, 74, 510], "unsat": [9.6, 11.1, 10.2, 9.3, 15.0, 10.9, 10.8, 9.4], "dig_ready": [63.4, 57.3, 72.6, 52.2, 63.8, 43.6, 43.2, 51.4], "multibank": [66.4, 67.4, 68.3, 53.3, 82.7, 45.5, 47.3, 62.7], "products": {"labels": ["tài khoản thanh toán", "Tiền gửi VND", "Tiền gửi ngoại tệ", "Thẻ tín dụng", "Thẻ ghi nợ", "Vay tín chấp", "Vay thế chấp", "Bảo hiểm nhân thọ"], "series": {"Chuyên viên, kỹ thuật viên": [96.3, 81.8, 18.0, 69.9, 58.1, 48.1, 50.2, 45.9], "Kinh doanh tự do": [96.6, 78.5, 21.1, 49.8, 47.1, 24.4, 47.6, 31.9], "Quản lý": [96.5, 86.6, 25.3, 73.4, 55.7, 51.0, 61.3, 53.3], "Sinh viên": [94.0, 76.4, 23.6, 28.6, 29.7, 14.3, 15.4, 21.4], "Chuyên gia": [95.3, 86.6, 45.7, 73.2, 65.4, 51.2, 59.1, 48.8], "Nội trợ": [93.6, 70.9, 20.0, 33.6, 30.0, 13.6, 20.9, 20.0], "Thất nghiệp/đã nghỉ hưu": [90.5, 86.5, 16.2, 24.3, 43.2, 10.8, 23.0, 20.3], "Khác": [95.3, 73.5, 9.0, 38.4, 32.7, 21.0, 29.8, 22.7], "Toàn mẫu": [95.9, 80.1, 19.9, 56.5, 48.7, 34.9, 45.2, 37.5]}}, "goals": {"labels": ["Mua nhà", "Đầu tư tài chính", "Khởi nghiệp / mở rộng KD", "Trả nợ", "Du học", "Nghỉ hưu"], "series": {"Toàn mẫu": [47.6, 46.3, 27.8, 24.3, 18.0, 8.8], "Chuyên viên, kỹ thuật viên": [52.2, 52.6, 28.4, 29.5, 20.4, 7.3], "Kinh doanh tự do": [49.4, 41.9, 33.9, 20.7, 14.0, 8.0], "Quản lý": [53.8, 52.0, 23.6, 28.7, 17.9, 9.1], "Sinh viên": [29.1, 54.4, 37.9, 6.6, 36.8, 3.3], "Chuyên gia": [53.5, 65.4, 26.8, 18.9, 24.4, 11.0], "Nội trợ": [31.8, 28.2, 20.0, 17.3, 17.3, 19.1], "Thất nghiệp/đã nghỉ hưu": [17.6, 21.6, 9.5, 21.6, 4.1, 52.7], "Khác": [41.8, 34.9, 21.0, 24.7, 13.7, 5.9]}}}}, "multi_bank": {"overall_pct": 65.3, "n_other": 2265, "n_only_bidv": 1205, "age": {"labels": ["≤25", "26-35", "36-45", "46-55", "≥56"], "values": [67.1, 70.9, 65.3, 57.5, 46.3], "n": [438, 1107, 1272, 478, 175]}, "marital": {"labels": ["Chưa kết hôn", "Đang hôn nhân", "Đã từng KH"], "values": [68.8, 64.6, 60.7], "n": [837, 2343, 290]}, "income": {"labels": ["<25tr", "25-45tr", "50-100tr", "100-200tr", ">200tr"], "values": [60.3, 67.6, 77.3, 78.3, 69.7], "n": [1880, 936, 383, 152, 119]}, "children": {"labels": ["Chưa có", "1 con", "2 con", "≥3 con"], "values": [69.6, 68.3, 61.8, 62.8], "n": [945, 666, 1558, 301]}, "banks": {"labels": ["Vietcombank", "MB", "Vietinbank", "Techcombank", "VPBank"], "values": [1042, 787, 699, 412, 245]}}, "kpi": {"N": 3470, "satisfaction_pct": 81.0, "digital_ready_pct": 59.9, "multibank_pct": 65.3, "age_mean": 37.2, "unsat_pct": 10.3, "unsat_n": 358, "factor_safety_pct": 78.0, "advisory_face_pct": 59.9, "high_lit_pct": 45.1, "buy_house_pct": 47.6, "account_pct": 95.9, "crypto_pct": 22.2}, "age": {"labels": ["Dưới 18", "18-25", "26-35", "36-45", "46-55", "56-65", "Trên 65"], "values": [43, 395, 1107, 1272, 478, 136, 39]}, "income": {"labels": ["<25tr", "25-45tr", "50-100tr", "100-200tr", ">200tr"], "values": [1880, 936, 383, 152, 119]}, "marital": {"labels": ["Chưa kết hôn", "Đang trong hôn nhân", "Đã từng kết hôn"], "values": [837, 2343, 290]}, "education": {"labels": ["THPT-CĐ", "Đại học", "Sau ĐH"], "values": [711, 2046, 713]}, "province": {"provinces": [{"name": "Hà Nội", "count": 394, "region": "Miền Bắc", "pct": 11.4}, {"name": "Hồ Chí Minh", "count": 377, "region": "Miền Nam", "pct": 10.9}, {"name": "Nghệ An", "count": 300, "region": "Miền Trung", "pct": 8.6}, {"name": "Đồng Tháp", "count": 251, "region": "Miền Nam", "pct": 7.2}, {"name": "Đà Nẵng", "count": 232, "region": "Miền Trung", "pct": 6.7}, {"name": "Vĩnh Long", "count": 225, "region": "Miền Nam", "pct": 6.5}, {"name": "Tây Ninh", "count": 219, "region": "Miền Nam", "pct": 6.3}, {"name": "Sơn La", "count": 203, "region": "Miền Bắc", "pct": 5.9}, {"name": "Phú Thọ", "count": 199, "region": "Miền Bắc", "pct": 5.7}, {"name": "Quảng Trị", "count": 177, "region": "Miền Trung", "pct": 5.1}, {"name": "Huế", "count": 173, "region": "Miền Trung", "pct": 5.0}, {"name": "An Giang", "count": 156, "region": "Miền Nam", "pct": 4.5}, {"name": "Quảng Ngãi", "count": 114, "region": "Miền Trung", "pct": 3.3}, {"name": "Cần Thơ", "count": 101, "region": "Miền Nam", "pct": 2.9}, {"name": "Hưng Yên", "count": 74, "region": "Miền Bắc", "pct": 2.1}, {"name": "Hải Phòng", "count": 73, "region": "Miền Bắc", "pct": 2.1}, {"name": "Thái Nguyên", "count": 52, "region": "Miền Bắc", "pct": 1.5}, {"name": "Thanh Hóa", "count": 35, "region": "Miền Bắc", "pct": 1.0}, {"name": "Lạng Sơn", "count": 31, "region": "Miền Bắc", "pct": 0.9}, {"name": "Quảng Ninh", "count": 24, "region": "Miền Bắc", "pct": 0.7}, {"name": "Ninh Bình", "count": 15, "region": "Miền Bắc", "pct": 0.4}, {"name": "Lào Cai", "count": 14, "region": "Miền Bắc", "pct": 0.4}, {"name": "Khánh Hòa", "count": 9, "region": "Miền Trung", "pct": 0.3}, {"name": "Đắk Lắk", "count": 9, "region": "Miền Trung", "pct": 0.3}, {"name": "Gia Lai", "count": 8, "region": "Miền Trung", "pct": 0.2}, {"name": "Bắc Ninh", "count": 3, "region": "Miền Bắc", "pct": 0.1}, {"name": "Đồng Nai", "count": 2, "region": "Miền Nam", "pct": 0.1}], "regions": {"labels": ["Miền Bắc", "Miền Trung", "Miền Nam"], "values": [1117, 1022, 1331], "pct": [32.2, 29.5, 38.4]}, "labels": ["Hà Nội", "Hồ Chí Minh", "Nghệ An", "Đồng Tháp", "Đà Nẵng", "Vĩnh Long", "Tây Ninh", "Sơn La", "Phú Thọ", "Quảng Trị", "Huế", "An Giang", "Quảng Ngãi", "Cần Thơ", "Hưng Yên", "Hải Phòng", "Thái Nguyên", "Thanh Hóa", "Lạng Sơn", "Quảng Ninh", "Ninh Bình", "Lào Cai", "Khánh Hòa", "Đắk Lắk", "Gia Lai", "Bắc Ninh", "Đồng Nai"], "values": [394, 377, 300, 251, 232, 225, 219, 203, 199, 177, 173, 156, 114, 101, 74, 73, 52, 35, 31, 24, 15, 14, 9, 9, 8, 3, 2]}, "region": {"labels": ["Miền Bắc", "Miền Trung", "Miền Nam"], "values": [1117, 1022, 1331]}, "occupation": {"labels": ["Chuyên viên, kỹ thuật viên", "Kinh doanh tự do", "Quản lý", "Sinh viên", "Chuyên gia", "Nội trợ"], "values": [1035, 891, 536, 170, 127, 110]}, "children": {"labels": ["Chưa có", "1 con", "2 con", "3 con trở lên"], "values": [945, 666, 1558, 301]}, "products": {"labels": ["TK thanh toán", "Tiền gửi VND", "Thẻ tín dụng", "Thẻ ghi nợ", "Vay thế chấp", "BH sức khỏe", "BH nhân thọ", "Vay tín chấp", "Cổ phiếu", "Vàng, bạc", "Quỹ đầu tư", "Tiền gửi ngoại tệ", "Trái phiếu", "Tài sản số"], "active": [95.9, 80.1, 56.5, 48.7, 45.2, 39.8, 37.5, 34.9, 22.3, 21.6, 20.1, 19.9, 16.6, 16.5], "frequent": [83.0, 45.0, 35.6, 27.2, 29.2, 22.1, 20.8, 22.2, 10.8, 9.0, 8.8, 8.8, 7.1, 7.8]}, "priority_bank": {"labels": ["Ngân hàng có uy tín cao trên thị trường", "Thao tác trên ứng dụng thuận tiện", "Dịch vụ có nhiều ưu đãi, lãi suất tốt", "Cán bộ giao dịch thân thiện", "Chi nhánh dễ tìm"], "values": [58.8, 58.8, 57.4, 57.0, 46.0]}, "product_choice_factor": {"labels": ["An toàn cao, bảo mật tốt", "Lãi suất và phí cạnh tranh", "Chăm sóc khách hàng tốt", "Dễ hiểu và dễ sử dụng", "Khuyến mãi/ưu đãi nhiều"], "values": [78.0, 74.2, 55.4, 47.4, 23.1]}, "info_source": {"labels": ["Trang web/ứng dụng của ngân hàng", "Nhân viên tư vấn", "Gia đình/bạn bè", "Báo chí/truyền hình", "Tham khảo mạng Tiktok/Youtube/Facebook"], "values": [66.3, 60.3, 60.0, 30.2, 27.9]}, "improvement_wish": {"labels": ["Gia tăng ưu đãi khách hàng theo quy mô giao dịch", "Chăm sóc khách hàng tốt (nhắc nợ tự động hiệu quả, phản hồi thông tin nhanh chóng…)", "Nhiều sản phẩm đa dạng, hấp dẫn hơn", "Thông báo sản phẩm/dịch vụ dễ hiểu hơn", "Tăng dịch vụ khác (phòng chờ sân bay, voucher nhãn hàng khác…)", "Tăng thêm các sự kiện/hoạt động thú vị, hấp dẫn cho khách hàng", "Ưu đãi liên kết sản phẩm trong hệ sinh thái nhiều hơn (chứng khoán, bảo hiểm…)", "Cung cấp thêm thông tin kinh tế/tài chính cho khách hàng tham khảo"], "values": [49.0, 45.5, 41.9, 28.2, 26.6, 23.5, 19.2, 18.0]}, "financial_goal": {"labels": ["Mua nhà", "Đầu tư tài chính", "Khởi nghiệp/kinh doanh", "Trả nợ", "Chưa có kế hoạch cụ thể", "Đầu tư du học/giáo dục", "Nghỉ hưu"], "values": [47.6, 35.9, 27.8, 24.3, 19.3, 17.9, 8.8]}, "satisfaction": {"labels": ["Rất không hài lòng", "Không hài lòng", "Bình thường", "Hài lòng", "Rất hài lòng"], "product": [9.3, 0.3, 9.5, 35.1, 45.9], "care": [8.0, 0.3, 11.6, 34.8, 45.4]}, "digital_readiness": {"labels": ["Tuyệt đối không", "Không muốn sử dụng", "Phân vân", "Có thể sử dụng", "Hoàn toàn sẵn sàng"], "values": [1.1, 3.1, 8.1, 27.9, 59.9]}, "crypto": {"labels": ["Không quan tâm", "Ít quan tâm", "Bình thường", "Quan tâm", "Rất quan tâm"], "values": [15.4, 16.0, 26.5, 19.9, 22.2]}, "self_literacy": {"labels": ["Rất thấp", "Thấp", "Trung bình", "Cao", "Rất cao"], "values": [1.4, 4.6, 49.0, 28.5, 16.6]}, "advisory": {"labels": ["Chưa từng", "Đã từng/dừng", "Hiếm khi", "Thỉnh thoảng", "Thường xuyên"], "values": [16.5, 4.1, 23.1, 37.3, 18.9]}, "advisory_pref": {"labels": ["Gặp trực tiếp", "Nhắn tin/Chat với tư vấn viên", "Gọi điện/gọi hình ảnh", "Không cần tư vấn", "Hỗ trợ bằng AI/robo-advisor"], "values": [59.9, 16.5, 12.0, 7.9, 3.7]}, "unsat": {"n_total": 3470, "n_unsat": 358, "pct_unsat": 10.3, "n_unsat_product": 332, "n_unsat_care": 286, "n_overlap": 260, "age_mean_all": 37.2, "age_mean_seg": 38.1, "age": {"labels": ["Dưới 18", "18-25", "26-35", "36-45", "46-55", "56-65", "Trên 65"], "all": [1.2, 11.4, 31.9, 36.7, 13.8, 3.9, 1.1], "seg": [2.2, 7.8, 29.6, 39.9, 15.4, 4.7, 0.3]}, "income": {"labels": ["<25tr", "25-45tr", "50-100tr", "100-200tr", ">200tr"], "all": [54.2, 27.0, 11.0, 4.4, 3.4], "seg": [50.6, 24.9, 10.3, 6.7, 7.5]}, "marital": {"labels": ["Chưa kết hôn", "Đang trong hôn nhân", "Đã từng kết hôn"], "all": [24.1, 67.5, 8.4], "seg": [17.9, 70.1, 12.0]}, "digital": {"labels": ["Tuyệt đối\nkhông", "Không\nmuốn", "Phân vân", "Có thể", "Hoàn toàn\nsẵn sàng"], "all": [1.1, 3.1, 8.1, 27.9, 59.9], "seg": [1.7, 3.4, 5.9, 21.2, 67.9]}}, "cross_marital_products": {"labels": ["TK toán", "Thẻ TD", "Vay thế chấp", "Vay tín chấp", "BH nhân thọ", "BH sức khỏe"], "series": {"Chưa kết hôn": [93.5, 46.5, 25.7, 23.4, 25.7, 31.1], "Đang trong hôn nhân": [96.8, 59.8, 51.7, 39.0, 41.0, 42.3], "Đã từng kết hôn": [95.2, 58.6, 49.3, 35.5, 43.1, 44.1]}}, "cross_marital_goal": {"labels": ["Mua nhà", "Đầu tư tài chính", "Khởi nghiệp/kinh doanh", "Trả nợ", "Nghỉ hưu", "Đầu tư du học/giáo dục"], "series": {"Chưa kết hôn": [48.4, 36.9, 37.2, 13.0, 5.0, 23.8], "Đang trong hôn nhân": [47.4, 35.8, 24.8, 28.1, 10.0, 16.0], "Đã từng kết hôn": [47.6, 34.1, 24.1, 25.9, 10.3, 16.2]}}, "cross_children_goal": {"labels": ["Mua nhà", "Đầu tư tài chính", "Khởi nghiệp/kinh doanh", "Trả nợ", "Nghỉ hưu", "Đầu tư du học/giáo dục"], "series": {"Chưa có": [50.2, 37.5, 37.2, 14.1, 4.3, 21.7], "1 con": [55.6, 37.2, 29.4, 22.5, 7.5, 14.9], "2 con": [43.5, 34.4, 22.9, 29.7, 11.3, 16.4], "3 con trở lên": [43.5, 36.2, 19.3, 32.2, 13.0, 20.6]}}, "cross_income_digital": {"labels": ["<25tr", "25-45tr", "50-100tr", "100-200tr", ">200tr"], "values": [57.3, 62.9, 61.9, 60.5, 68.1]}, "cross_income_crypto": {"labels": ["<25tr", "25-45tr", "50-100tr", "100-200tr", ">200tr"], "values": [21.5, 20.9, 22.5, 25.7, 37.8]}, "cross_income_satisfaction_unsat": {"labels": ["<25tr", "25-45tr", "50-100tr", "100-200tr", ">200tr"], "values": [8.9, 8.5, 8.1, 13.2, 20.2]}, "cross_income_selfliteracy_high": {"labels": ["<25tr", "25-45tr", "50-100tr", "100-200tr", ">200tr"], "values": [13.7, 17.7, 20.1, 23.0, 34.5]}, "cross_income_invest": {"labels": ["Cổ phiếu", "Trái phiếu", "Quỹ đầu tư", "Tài sản số"], "series": {"<25tr": [16.1, 13.3, 15.7, 13.5], "25-45tr": [28.0, 19.8, 24.6, 18.9], "50-100tr": [31.1, 18.5, 23.8, 19.3], "100-200tr": [26.3, 23.7, 27.0, 21.7], ">200tr": [42.0, 27.7, 34.5, 29.4]}}, "cross_children_protect": {"labels": ["BH nhân thọ", "BH sức khỏe", "Vay thế chấp", "Tiền gửi VND"], "series": {"Chưa có": [24.8, 31.1, 26.7, 76.2], "1 con": [36.5, 38.7, 42.2, 76.9], "2 con": [43.5, 43.6, 55.1, 83.0], "3 con trở lên": [48.5, 49.5, 59.1, 84.7]}},
+const DATA = {"N": 3470, "advisory_use": {"labels": ["Thường xuyên", "Thỉnh thoảng", "Hiếm khi", "Chưa từng", "Đã từng, ngưng"], "labels_full": ["Thường xuyên", "Thỉnh thoảng", "Hiếm khi", "Chưa từng sử dụng", "Đã từng nhưng hiện không dùng"], "overall": [18.9, 37.3, 23.1, 16.5, 4.1], "age": {"Toàn mẫu": [18.9, 37.3, 23.1, 16.5, 4.1], "≤25": [18.7, 32.6, 27.9, 17.4, 3.4], "26-35": [18.6, 38.6, 24.3, 15.3, 3.3], "36-45": [18.5, 38.7, 21.8, 16.5, 4.6], "46-55": [20.3, 38.9, 19.7, 15.9, 5.2], "≥56": [21.1, 27.4, 22.9, 22.9, 5.7]}, "marital": {"Toàn mẫu": [18.9, 37.3, 23.1, 16.5, 4.1], "Chưa kết hôn": [18.8, 33.9, 26.9, 16.7, 3.7], "Đang hôn nhân": [18.2, 38.7, 22.1, 16.6, 4.4], "Đã từng KH": [25.5, 36.2, 20.3, 14.1, 3.8]}, "income": {"Toàn mẫu": [18.9, 37.3, 23.1, 16.5, 4.1], "<25tr": [16.0, 35.2, 24.2, 20.1, 4.6], "25-45tr": [20.8, 39.5, 22.4, 13.4, 3.8], "50-100tr": [22.2, 42.6, 21.7, 10.7, 2.9], "100-200tr": [27.6, 35.5, 20.4, 13.2, 3.3], ">200tr": [29.4, 39.5, 19.3, 6.7, 5.0]}, "children": {"Toàn mẫu": [18.9, 37.3, 23.1, 16.5, 4.1], "Chưa có": [18.6, 34.7, 26.2, 16.9, 3.5], "1 con": [21.6, 35.1, 23.6, 15.3, 4.4], "2 con": [18.1, 39.9, 20.6, 17.1, 4.2], "≥3 con": [18.3, 37.2, 25.2, 14.0, 5.3]}, "region": {"Toàn mẫu": [18.9, 37.3, 23.1, 16.5, 4.1], "Miền Bắc": [16.9, 38.5, 24.4, 16.7, 3.5], "Miền Trung": [20.7, 38.1, 24.3, 12.8, 4.1], "Miền Nam": [19.2, 35.8, 21.1, 19.1, 4.7]}, "occupation": {"Toàn mẫu": [18.9, 37.3, 23.1, 16.5, 4.1], "Chuyên viên/KT": [19.3, 40.0, 22.6, 14.7, 3.5], "KD tự do": [19.3, 38.8, 21.4, 16.7, 3.8], "Quản lý": [25.1, 40.2, 21.8, 8.6, 4.3], "Sinh viên": [14.8, 29.7, 31.9, 20.9, 2.7], "Chuyên gia": [33.1, 37.8, 18.1, 5.5, 5.5], "Nội trợ": [12.7, 20.9, 29.1, 30.9, 6.4], "Nghỉ hưu/TN": [12.2, 21.6, 33.8, 24.3, 8.1], "Khác": [11.4, 34.8, 23.9, 24.9, 5.1]}}, "expand_factors": {"labels": ["CSKH tốt", "SP phù hợp nhu cầu", "Thông báo SP/DV mới", "Ưu đãi theo quy mô GD", "DV khác đa dạng", "Ưu đãi hệ sinh thái", "TT KT/TC hữu ích"], "overall": [84.2, 55.4, 37.5, 36.3, 25.9, 18.6, 17.1], "age": {"Toàn mẫu": [84.2, 55.4, 37.5, 36.3, 25.9, 18.6, 17.1], "≤25": [83.1, 44.3, 37.0, 33.8, 38.8, 20.8, 26.0], "26-35": [83.2, 54.0, 36.7, 37.0, 30.2, 21.6, 18.4], "36-45": [84.4, 58.0, 38.1, 35.5, 22.5, 16.8, 13.4], "46-55": [86.8, 61.3, 36.6, 35.6, 18.8, 16.1, 16.1], "≥56": [85.1, 57.1, 42.9, 46.3, 11.4, 13.7, 16.0]}, "marital": {"Toàn mẫu": [84.2, 55.4, 37.5, 36.3, 25.9, 18.6, 17.1], "Chưa kết hôn": [82.0, 49.8, 36.8, 35.8, 36.2, 23.3, 23.8], "Đang hôn nhân": [85.0, 58.0, 37.9, 36.4, 22.9, 17.3, 14.6], "Đã từng KH": [84.5, 50.3, 36.9, 36.9, 20.7, 15.5, 17.9]}, "income": {"Toàn mẫu": [84.2, 55.4, 37.5, 36.3, 25.9, 18.6, 17.1], "<25tr": [84.3, 51.9, 37.5, 34.3, 28.5, 17.2, 17.2], "25-45tr": [84.6, 61.4, 37.3, 36.6, 24.3, 20.4, 16.2], "50-100tr": [81.5, 59.0, 37.9, 42.0, 21.4, 17.8, 15.1], "100-200tr": [86.8, 49.3, 37.5, 42.8, 20.4, 25.7, 22.4], ">200tr": [84.9, 60.5, 38.7, 39.5, 21.0, 19.3, 21.8]}, "children": {"Toàn mẫu": [84.2, 55.4, 37.5, 36.3, 25.9, 18.6, 17.1], "Chưa có": [82.0, 50.4, 36.1, 35.2, 35.9, 23.4, 22.6], "1 con": [83.0, 51.2, 38.3, 36.0, 25.5, 20.1, 16.4], "2 con": [85.6, 59.1, 38.4, 36.3, 20.8, 15.4, 14.3], "≥3 con": [86.4, 61.5, 35.9, 40.5, 22.3, 16.6, 15.6]}, "region": {"Toàn mẫu": [84.2, 55.4, 37.5, 36.3, 25.9, 18.6, 17.1], "Miền Bắc": [85.0, 56.4, 37.0, 37.0, 27.4, 18.4, 17.8], "Miền Trung": [82.9, 53.6, 36.1, 35.1, 26.0, 20.6, 16.6], "Miền Nam": [84.6, 56.0, 39.1, 36.7, 24.6, 17.1, 16.8]}, "occupation": {"Toàn mẫu": [84.2, 55.4, 37.5, 36.3, 25.9, 18.6, 17.1], "Chuyên viên/KT": [82.9, 60.2, 38.1, 37.7, 28.0, 22.3, 14.9], "KD tự do": [84.2, 53.1, 39.6, 36.1, 20.0, 16.2, 16.6], "Quản lý": [86.6, 55.7, 34.6, 34.3, 24.6, 18.4, 14.5], "Sinh viên": [81.3, 43.4, 33.5, 29.7, 39.0, 15.9, 30.2], "Chuyên gia": [81.1, 48.0, 33.1, 42.5, 22.0, 20.5, 20.5], "Nội trợ": [81.8, 48.2, 40.0, 38.2, 22.7, 17.3, 12.7], "Nghỉ hưu/TN": [85.1, 58.1, 44.6, 45.9, 8.1, 9.5, 20.3], "Khác": [86.5, 56.9, 36.7, 35.3, 33.1, 17.5, 20.0]}}, "cross_reg_occ": {"region": {"labels": ["Miền Bắc", "Miền Trung", "Miền Nam"], "n": [1117, 1022, 1331], "unsat": [9.1, 10.1, 11.5], "dig_ready": [59.2, 61.3, 59.4], "multibank": [67.9, 66.7, 61.9], "products": {"labels": ["tài khoản thanh toán", "Tiền gửi VND", "Tiền gửi ngoại tệ", "Thẻ tín dụng", "Thẻ ghi nợ", "Vay tín chấp", "Vay thế chấp", "Bảo hiểm nhân thọ"], "series": {"Miền Bắc": [95.4, 77.8, 19.6, 55.0, 44.9, 33.1, 41.9, 37.1], "Miền Trung": [95.8, 81.0, 21.5, 55.7, 49.9, 38.3, 47.2, 37.5], "Miền Nam": [96.4, 81.4, 19.0, 58.4, 51.0, 33.9, 46.6, 37.9], "Toàn mẫu": [95.9, 80.1, 19.9, 56.5, 48.7, 34.9, 45.2, 37.5]}}, "goals": {"labels": ["Mua nhà", "Đầu tư tài chính", "Khởi nghiệp / mở rộng KD", "Trả nợ", "Du học", "Nghỉ hưu"], "series": {"Toàn mẫu": [47.6, 46.3, 27.8, 24.3, 18.0, 8.8], "Miền Bắc": [50.2, 48.8, 25.4, 24.8, 17.7, 7.5], "Miền Trung": [48.0, 46.6, 26.0, 24.8, 18.6, 8.7], "Miền Nam": [45.2, 43.9, 31.0, 23.4, 17.7, 10.0]}}}, "occupation": {"labels": ["Chuyên viên/KT", "KD tự do", "Quản lý", "Sinh viên", "Chuyên gia", "Nội trợ", "Nghỉ hưu/TN", "Khác"], "labels_full": ["Chuyên viên, kỹ thuật viên", "Kinh doanh tự do", "Quản lý", "Sinh viên", "Chuyên gia", "Nội trợ", "Thất nghiệp/đã nghỉ hưu", "Khác"], "n": [1037, 893, 537, 182, 127, 110, 74, 510], "unsat": [9.6, 11.1, 10.2, 9.3, 15.0, 10.9, 10.8, 9.4], "dig_ready": [63.4, 57.3, 72.6, 52.2, 63.8, 43.6, 43.2, 51.4], "multibank": [66.4, 67.4, 68.3, 53.3, 82.7, 45.5, 47.3, 62.7], "products": {"labels": ["tài khoản thanh toán", "Tiền gửi VND", "Tiền gửi ngoại tệ", "Thẻ tín dụng", "Thẻ ghi nợ", "Vay tín chấp", "Vay thế chấp", "Bảo hiểm nhân thọ"], "series": {"Chuyên viên, kỹ thuật viên": [96.3, 81.8, 18.0, 69.9, 58.1, 48.1, 50.2, 45.9], "Kinh doanh tự do": [96.6, 78.5, 21.1, 49.8, 47.1, 24.4, 47.6, 31.9], "Quản lý": [96.5, 86.6, 25.3, 73.4, 55.7, 51.0, 61.3, 53.3], "Sinh viên": [94.0, 76.4, 23.6, 28.6, 29.7, 14.3, 15.4, 21.4], "Chuyên gia": [95.3, 86.6, 45.7, 73.2, 65.4, 51.2, 59.1, 48.8], "Nội trợ": [93.6, 70.9, 20.0, 33.6, 30.0, 13.6, 20.9, 20.0], "Thất nghiệp/đã nghỉ hưu": [90.5, 86.5, 16.2, 24.3, 43.2, 10.8, 23.0, 20.3], "Khác": [95.3, 73.5, 9.0, 38.4, 32.7, 21.0, 29.8, 22.7], "Toàn mẫu": [95.9, 80.1, 19.9, 56.5, 48.7, 34.9, 45.2, 37.5]}}, "goals": {"labels": ["Mua nhà", "Đầu tư tài chính", "Khởi nghiệp / mở rộng KD", "Trả nợ", "Du học", "Nghỉ hưu"], "series": {"Toàn mẫu": [47.6, 46.3, 27.8, 24.3, 18.0, 8.8], "Chuyên viên, kỹ thuật viên": [52.2, 52.6, 28.4, 29.5, 20.4, 7.3], "Kinh doanh tự do": [49.4, 41.9, 33.9, 20.7, 14.0, 8.0], "Quản lý": [53.8, 52.0, 23.6, 28.7, 17.9, 9.1], "Sinh viên": [29.1, 54.4, 37.9, 6.6, 36.8, 3.3], "Chuyên gia": [53.5, 65.4, 26.8, 18.9, 24.4, 11.0], "Nội trợ": [31.8, 28.2, 20.0, 17.3, 17.3, 19.1], "Thất nghiệp/đã nghỉ hưu": [17.6, 21.6, 9.5, 21.6, 4.1, 52.7], "Khác": [41.8, 34.9, 21.0, 24.7, 13.7, 5.9]}}}}, "multi_bank": {"overall_pct": 65.3, "n_other": 2265, "n_only_bidv": 1205, "age": {"labels": ["≤25", "26-35", "36-45", "46-55", "≥56"], "values": [67.1, 70.9, 65.3, 57.5, 46.3], "n": [438, 1107, 1272, 478, 175]}, "marital": {"labels": ["Chưa kết hôn", "Đang hôn nhân", "Đã từng KH"], "values": [68.8, 64.6, 60.7], "n": [837, 2343, 290]}, "income": {"labels": ["<25tr", "25-45tr", "50-100tr", "100-200tr", ">200tr"], "values": [60.3, 67.6, 77.3, 78.3, 69.7], "n": [1880, 936, 383, 152, 119]}, "children": {"labels": ["Chưa có", "1 con", "2 con", "≥3 con"], "values": [69.6, 68.3, 61.8, 62.8], "n": [945, 666, 1558, 301]}, "banks": {"labels": ["Vietcombank", "MB", "Vietinbank", "Techcombank", "VPBank"], "values": [1042, 787, 699, 412, 245]}}, "kpi": {"N": 3470, "satisfaction_pct": 81.0, "digital_ready_pct": 59.9, "multibank_pct": 65.3, "age_mean": 37.2, "unsat_pct": 10.3, "unsat_n": 358, "factor_safety_pct": 78.0, "advisory_face_pct": 59.9, "high_lit_pct": 45.1, "buy_house_pct": 47.6, "account_pct": 95.9, "crypto_pct": 22.2}, "age": {"labels": ["Dưới 18", "18-25", "26-35", "36-45", "46-55", "56-65", "Trên 65"], "values": [43, 395, 1107, 1272, 478, 136, 39]}, "income": {"labels": ["<25tr", "25-45tr", "50-100tr", "100-200tr", ">200tr"], "values": [1880, 936, 383, 152, 119]}, "marital": {"labels": ["Chưa kết hôn", "Đang trong hôn nhân", "Đã từng kết hôn"], "values": [837, 2343, 290]}, "education": {"labels": ["THPT-CĐ", "Đại học", "Sau ĐH"], "values": [711, 2046, 713]}, "province": {"provinces": [{"name": "Hà Nội", "count": 394, "region": "Miền Bắc", "pct": 11.4}, {"name": "Hồ Chí Minh", "count": 377, "region": "Miền Nam", "pct": 10.9}, {"name": "Nghệ An", "count": 300, "region": "Miền Trung", "pct": 8.6}, {"name": "Đồng Tháp", "count": 251, "region": "Miền Nam", "pct": 7.2}, {"name": "Đà Nẵng", "count": 232, "region": "Miền Trung", "pct": 6.7}, {"name": "Vĩnh Long", "count": 225, "region": "Miền Nam", "pct": 6.5}, {"name": "Tây Ninh", "count": 219, "region": "Miền Nam", "pct": 6.3}, {"name": "Sơn La", "count": 203, "region": "Miền Bắc", "pct": 5.9}, {"name": "Phú Thọ", "count": 199, "region": "Miền Bắc", "pct": 5.7}, {"name": "Quảng Trị", "count": 177, "region": "Miền Trung", "pct": 5.1}, {"name": "Huế", "count": 173, "region": "Miền Trung", "pct": 5.0}, {"name": "An Giang", "count": 156, "region": "Miền Nam", "pct": 4.5}, {"name": "Quảng Ngãi", "count": 114, "region": "Miền Trung", "pct": 3.3}, {"name": "Cần Thơ", "count": 101, "region": "Miền Nam", "pct": 2.9}, {"name": "Hưng Yên", "count": 74, "region": "Miền Bắc", "pct": 2.1}, {"name": "Hải Phòng", "count": 73, "region": "Miền Bắc", "pct": 2.1}, {"name": "Thái Nguyên", "count": 52, "region": "Miền Bắc", "pct": 1.5}, {"name": "Thanh Hóa", "count": 35, "region": "Miền Bắc", "pct": 1.0}, {"name": "Lạng Sơn", "count": 31, "region": "Miền Bắc", "pct": 0.9}, {"name": "Quảng Ninh", "count": 24, "region": "Miền Bắc", "pct": 0.7}, {"name": "Ninh Bình", "count": 15, "region": "Miền Bắc", "pct": 0.4}, {"name": "Lào Cai", "count": 14, "region": "Miền Bắc", "pct": 0.4}, {"name": "Khánh Hòa", "count": 9, "region": "Miền Trung", "pct": 0.3}, {"name": "Đắk Lắk", "count": 9, "region": "Miền Trung", "pct": 0.3}, {"name": "Gia Lai", "count": 8, "region": "Miền Trung", "pct": 0.2}, {"name": "Bắc Ninh", "count": 3, "region": "Miền Bắc", "pct": 0.1}, {"name": "Đồng Nai", "count": 2, "region": "Miền Nam", "pct": 0.1}], "regions": {"labels": ["Miền Bắc", "Miền Trung", "Miền Nam"], "values": [1117, 1022, 1331], "pct": [32.2, 29.5, 38.4]}, "labels": ["Hà Nội", "Hồ Chí Minh", "Nghệ An", "Đồng Tháp", "Đà Nẵng", "Vĩnh Long", "Tây Ninh", "Sơn La", "Phú Thọ", "Quảng Trị", "Huế", "An Giang", "Quảng Ngãi", "Cần Thơ", "Hưng Yên", "Hải Phòng", "Thái Nguyên", "Thanh Hóa", "Lạng Sơn", "Quảng Ninh", "Ninh Bình", "Lào Cai", "Khánh Hòa", "Đắk Lắk", "Gia Lai", "Bắc Ninh", "Đồng Nai"], "values": [394, 377, 300, 251, 232, 225, 219, 203, 199, 177, 173, 156, 114, 101, 74, 73, 52, 35, 31, 24, 15, 14, 9, 9, 8, 3, 2]}, "region": {"labels": ["Miền Bắc", "Miền Trung", "Miền Nam"], "values": [1117, 1022, 1331]}, "occupation": {"labels": ["Chuyên viên, kỹ thuật viên", "Kinh doanh tự do", "Quản lý", "Sinh viên", "Chuyên gia", "Nội trợ"], "values": [1035, 891, 536, 170, 127, 110]}, "children": {"labels": ["Chưa có", "1 con", "2 con", "3 con trở lên"], "values": [945, 666, 1558, 301]}, "products": {"labels": ["TK thanh toán", "Tiền gửi VND", "Thẻ tín dụng", "Thẻ ghi nợ", "Vay thế chấp", "BH sức khỏe", "BH nhân thọ", "Vay tín chấp", "Cổ phiếu", "Vàng, bạc", "Quỹ đầu tư", "Tiền gửi ngoại tệ", "Trái phiếu", "Tài sản số"], "active": [95.9, 80.1, 56.5, 48.7, 45.2, 39.8, 37.5, 34.9, 22.3, 21.6, 20.1, 19.9, 16.6, 16.5], "frequent": [83.0, 45.0, 35.6, 27.2, 29.2, 22.1, 20.8, 22.2, 10.8, 9.0, 8.8, 8.8, 7.1, 7.8]}, "priority_bank": {"labels": ["Ngân hàng có uy tín cao trên thị trường", "Thao tác trên ứng dụng thuận tiện", "Dịch vụ có nhiều ưu đãi, lãi suất tốt", "Cán bộ giao dịch thân thiện", "Chi nhánh dễ tìm"], "values": [58.8, 58.8, 57.4, 57.0, 46.0]}, "product_choice_factor": {"labels": ["An toàn cao, bảo mật tốt", "Lãi suất và phí cạnh tranh", "Chăm sóc khách hàng tốt", "Dễ hiểu và dễ sử dụng", "Khuyến mãi/ưu đãi nhiều"], "values": [78.0, 74.2, 55.4, 47.4, 23.1]}, "info_source": {"labels": ["Trang web/ứng dụng của ngân hàng", "Nhân viên tư vấn", "Gia đình/bạn bè", "Báo chí/truyền hình", "Tham khảo mạng Tiktok/Youtube/Facebook"], "values": [66.3, 60.3, 60.0, 30.2, 27.9]}, "improvement_wish": {"labels": ["Gia tăng ưu đãi khách hàng theo quy mô giao dịch", "Chăm sóc khách hàng tốt (nhắc nợ tự động hiệu quả, phản hồi thông tin nhanh chóng…)", "Nhiều sản phẩm đa dạng, hấp dẫn hơn", "Thông báo sản phẩm/dịch vụ dễ hiểu hơn", "Tăng dịch vụ khác (phòng chờ sân bay, voucher nhãn hàng khác…)", "Tăng thêm các sự kiện/hoạt động thú vị, hấp dẫn cho khách hàng", "Ưu đãi liên kết sản phẩm trong hệ sinh thái nhiều hơn (chứng khoán, bảo hiểm…)", "Cung cấp thêm thông tin kinh tế/tài chính cho khách hàng tham khảo"], "values": [49.0, 45.5, 41.9, 28.2, 26.6, 23.5, 19.2, 18.0]}, "financial_goal": {"labels": ["Mua nhà", "Đầu tư tài chính", "Khởi nghiệp/kinh doanh", "Trả nợ", "Chưa có kế hoạch cụ thể", "Đầu tư du học/giáo dục", "Nghỉ hưu"], "values": [47.6, 35.9, 27.8, 24.3, 19.3, 17.9, 8.8]}, "satisfaction": {"labels": ["Rất không hài lòng", "Không hài lòng", "Bình thường", "Hài lòng", "Rất hài lòng"], "product": [9.3, 0.3, 9.5, 35.1, 45.9], "care": [8.0, 0.3, 11.6, 34.8, 45.4]}, "digital_readiness": {"labels": ["Tuyệt đối không", "Không muốn sử dụng", "Phân vân", "Có thể sử dụng", "Hoàn toàn sẵn sàng"], "values": [1.1, 3.1, 8.1, 27.9, 59.9]}, "crypto": {"labels": ["Không quan tâm", "Ít quan tâm", "Bình thường", "Quan tâm", "Rất quan tâm"], "values": [15.4, 16.0, 26.5, 19.9, 22.2]}, "self_literacy": {"labels": ["Rất thấp", "Thấp", "Trung bình", "Cao", "Rất cao"], "values": [1.4, 4.6, 49.0, 28.5, 16.6]}, "advisory": {"labels": ["Chưa từng", "Đã từng/dừng", "Hiếm khi", "Thỉnh thoảng", "Thường xuyên"], "values": [16.5, 4.1, 23.1, 37.3, 18.9]}, "advisory_pref": {"labels": ["Gặp trực tiếp", "Nhắn tin/Chat với tư vấn viên", "Gọi điện/gọi hình ảnh", "Không cần tư vấn", "Hỗ trợ bằng AI/robo-advisor"], "values": [59.9, 16.5, 12.0, 7.9, 3.7]}, "unsat": {"n_total": 3470, "n_unsat": 358, "pct_unsat": 10.3, "n_unsat_product": 332, "n_unsat_care": 286, "n_overlap": 260, "age_mean_all": 37.2, "age_mean_seg": 38.1, "age": {"labels": ["Dưới 18", "18-25", "26-35", "36-45", "46-55", "56-65", "Trên 65"], "all": [1.2, 11.4, 31.9, 36.7, 13.8, 3.9, 1.1], "seg": [2.2, 7.8, 29.6, 39.9, 15.4, 4.7, 0.3]}, "income": {"labels": ["<25tr", "25-45tr", "50-100tr", "100-200tr", ">200tr"], "all": [54.2, 27.0, 11.0, 4.4, 3.4], "seg": [50.6, 24.9, 10.3, 6.7, 7.5]}, "marital": {"labels": ["Chưa kết hôn", "Đang trong hôn nhân", "Đã từng kết hôn"], "all": [24.1, 67.5, 8.4], "seg": [17.9, 70.1, 12.0]}, "digital": {"labels": ["Tuyệt đối\nkhông", "Không\nmuốn", "Phân vân", "Có thể", "Hoàn toàn\nsẵn sàng"], "all": [1.1, 3.1, 8.1, 27.9, 59.9], "seg": [1.7, 3.4, 5.9, 21.2, 67.9]}}, "cross_marital_products": {"labels": ["TK toán", "Thẻ TD", "Vay thế chấp", "Vay tín chấp", "BH nhân thọ", "BH sức khỏe"], "series": {"Chưa kết hôn": [93.5, 46.5, 25.7, 23.4, 25.7, 31.1], "Đang trong hôn nhân": [96.8, 59.8, 51.7, 39.0, 41.0, 42.3], "Đã từng kết hôn": [95.2, 58.6, 49.3, 35.5, 43.1, 44.1]}}, "cross_marital_goal": {"labels": ["Mua nhà", "Đầu tư tài chính", "Khởi nghiệp/kinh doanh", "Trả nợ", "Nghỉ hưu", "Đầu tư du học/giáo dục"], "series": {"Chưa kết hôn": [48.4, 36.9, 37.2, 13.0, 5.0, 23.8], "Đang trong hôn nhân": [47.4, 35.8, 24.8, 28.1, 10.0, 16.0], "Đã từng kết hôn": [47.6, 34.1, 24.1, 25.9, 10.3, 16.2]}}, "cross_children_goal": {"labels": ["Mua nhà", "Đầu tư tài chính", "Khởi nghiệp/kinh doanh", "Trả nợ", "Nghỉ hưu", "Đầu tư du học/giáo dục"], "series": {"Chưa có": [50.2, 37.5, 37.2, 14.1, 4.3, 21.7], "1 con": [55.6, 37.2, 29.4, 22.5, 7.5, 14.9], "2 con": [43.5, 34.4, 22.9, 29.7, 11.3, 16.4], "3 con trở lên": [43.5, 36.2, 19.3, 32.2, 13.0, 20.6]}}, "cross_income_digital": {"labels": ["<25tr", "25-45tr", "50-100tr", "100-200tr", ">200tr"], "values": [57.3, 62.9, 61.9, 60.5, 68.1]}, "cross_income_crypto": {"labels": ["<25tr", "25-45tr", "50-100tr", "100-200tr", ">200tr"], "values": [21.5, 20.9, 22.5, 25.7, 37.8]}, "cross_income_satisfaction_unsat": {"labels": ["<25tr", "25-45tr", "50-100tr", "100-200tr", ">200tr"], "values": [8.9, 8.5, 8.1, 13.2, 20.2]}, "cross_income_selfliteracy_high": {"labels": ["<25tr", "25-45tr", "50-100tr", "100-200tr", ">200tr"], "values": [13.7, 17.7, 20.1, 23.0, 34.5]}, "cross_income_invest": {"labels": ["Cổ phiếu", "Trái phiếu", "Quỹ đầu tư", "Tài sản số"], "series": {"<25tr": [16.1, 13.3, 15.7, 13.5], "25-45tr": [28.0, 19.8, 24.6, 18.9], "50-100tr": [31.1, 18.5, 23.8, 19.3], "100-200tr": [26.3, 23.7, 27.0, 21.7], ">200tr": [42.0, 27.7, 34.5, 29.4]}}, "cross_children_protect": {"labels": ["BH nhân thọ", "BH sức khỏe", "Vay thế chấp", "Tiền gửi VND"], "series": {"Chưa có": [24.8, 31.1, 26.7, 76.2], "1 con": [36.5, 38.7, 42.2, 76.9], "2 con": [43.5, 43.6, 55.1, 83.0], "3 con trở lên": [48.5, 49.5, 59.1, 84.7]}},
 "cross_age_products": {"labels": ["TK thanh toán", "TG VND", "Thẻ TD", "Vay thế chấp", "Vay tín chấp", "BH NT", "Cổ phiếu", "Quỹ ĐT"], "series": {"≤25": [92.9, 75.1, 37.7, 19.6, 18.0, 21.9, 20.1, 20.1], "26-35": [95.6, 76.9, 56.1, 37.8, 30.4, 33.2, 20.3, 19.9], "36-45": [97.3, 81.6, 63.9, 56.5, 43.1, 46.5, 24.8, 22.0], "46-55": [96.2, 84.9, 63.0, 59.2, 45.8, 43.5, 26.4, 19.7], "≥56": [94.3, 89.1, 34.3, 36.6, 17.1, 22.3, 10.9, 9.7], "Toàn mẫu": [95.9, 80.1, 56.5, 45.2, 34.9, 37.5, 22.3, 20.1]}},
 "cross_age_goal": {"labels": ["Mua nhà", "Đầu tư tài chính", "Khởi nghiệp/kinh doanh", "Trả nợ", "Đầu tư du học/giáo dục", "Nghỉ hưu", "Chưa có kế hoạch cụ thể"], "series": {"≤25": [42.2, 37.0, 41.3, 9.4, 27.2, 3.7, 26.5], "26-35": [57.3, 37.2, 33.2, 22.5, 15.8, 4.3, 16.2], "36-45": [46.5, 37.5, 24.4, 30.0, 19.1, 6.0, 16.5], "46-55": [40.4, 33.7, 18.4, 29.3, 14.9, 18.0, 23.8], "≥56": [28.0, 20.0, 9.1, 17.1, 8.0, 45.7, 28.0], "Toàn mẫu": [47.6, 35.9, 27.8, 24.3, 17.9, 8.8, 19.3]}},
 "cross_age_digital": {"labels": ["≤25", "26-35", "36-45", "46-55", "≥56"], "ready": [55.7, 60.6, 61.8, 60.0, 50.9], "crypto": [24.9, 22.1, 21.2, 23.8, 18.9], "unsat": [8.0, 8.5, 10.5, 10.9, 10.3], "high_lit": [41.6, 45.1, 45.4, 50.0, 38.3]},
@@ -408,6 +530,53 @@ Chart.defaults.plugins.legend.labels.boxWidth = 8;
 Chart.defaults.plugins.legend.labels.boxHeight = 8;
 
 const dataLabelColor = '#132625';
+
+/** Format số theo chuẩn Việt Nam: 1.234,5 */
+function fmtVN(n, digits){
+  if(n == null || n === '') return '';
+  // Nếu đã là chuỗi số VN (vd "3.470" hoặc "65,3") → parse đúng
+  let num;
+  if(typeof n === 'string'){
+    const s = n.trim();
+    if(/^-?\d{1,3}(\.\d{3})+(,\d+)?$/.test(s) || /^-?\d+,\d+$/.test(s)){
+      num = Number(s.replace(/\./g,'').replace(',','.'));
+    } else {
+      num = Number(s.replace(',','.'));
+    }
+  } else {
+    num = Number(n);
+  }
+  if(!isFinite(num)) return String(n);
+  const opt = {};
+  if(digits != null){
+    opt.minimumFractionDigits = digits;
+    opt.maximumFractionDigits = digits;
+  } else if(Number.isInteger(num)){
+    opt.maximumFractionDigits = 0;
+  } else {
+    opt.maximumFractionDigits = 1;
+    // giữ 1 chữ số thập phân nếu dữ liệu có thập phân kiểu 65.3
+    const s = String(n);
+    if(s.includes('.') && s.split('.')[1].length > 1) opt.maximumFractionDigits = 2;
+  }
+  return num.toLocaleString('vi-VN', opt);
+}
+function fmtPct(n, digits){
+  if(digits == null){
+    // mặc định: số nguyên → 0 số lẻ; còn lại 1 số lẻ
+    const num = Number(n);
+    if(!isFinite(num)) return String(n) + '%';
+    digits = Number.isInteger(num) ? 0 : 1;
+  }
+  return fmtVN(n, digits) + '%';
+}
+function fmtCount(n){
+  return fmtVN(n, 0);
+}
+
+// Chart.js dùng locale VN cho tick/tooltip mặc định
+try{ Chart.defaults.locale = 'vi-VN'; }catch(_){}
+
 
 /** Per-chart style: legend & data-label font sizes (px) */
 const CHART_STYLE_DEFAULTS = { legend: 10.5, label: 10.5, axis: 10.5 };
@@ -469,12 +638,12 @@ function renderKPIs(){
   const k = DATA.kpi;
   // 12 KPIs · 2 rows × 6 · alternate teal / gold brand colors
   const items = [
-    {num: k.N.toLocaleString('vi-VN'), unit:'', lbl:'Khách hàng tham gia khảo sát', tone:'teal'},
+    {num: k.N, unit:'', lbl:'Khách hàng tham gia khảo sát', tone:'teal'},
     {num: k.satisfaction_pct, unit:'%', lbl:'Hài lòng / rất hài lòng với sản phẩm', tone:'gold'},
     {num: k.digital_ready_pct, unit:'%', lbl:'Sẵn sàng ngân hàng số hoàn toàn', tone:'teal'},
     {num: k.multibank_pct, unit:'%', lbl:'Giao dịch thêm ngân hàng khác', tone:'gold'},
     {num: k.age_mean, unit:' tuổi', lbl:'Độ tuổi trung bình khách hàng', tone:'teal'},
-    {num: k.unsat_pct, unit:'%', lbl:`Không hài lòng ≥1 mặt (${k.unsat_n} KH)`, tone:'gold'},
+    {num: k.unsat_pct, unit:'%', lbl:`Không hài lòng ≥1 mặt (${fmtCount(k.unsat_n)} KH)`, tone:'gold'},
     {num: k.account_pct, unit:'%', lbl:'Sử dụng TK thanh toán (tích cực)', tone:'gold'},
     {num: k.buy_house_pct, unit:'%', lbl:'Kế hoạch mua nhà trong 3 năm tới', tone:'teal'},
     {num: k.factor_safety_pct, unit:'%', lbl:'YT chọn SP: An toàn & bảo mật', tone:'gold'},
@@ -483,11 +652,18 @@ function renderKPIs(){
     {num: k.crypto_pct, unit:'%', lbl:'Rất quan tâm tài sản số (crypto)', tone:'teal'},
   ];
   const el = document.getElementById('kpiStrip');
-  el.innerHTML = items.map(it => `
+  el.innerHTML = items.map(it => {
+    const isPct = it.unit === '%';
+    let display;
+    if(isPct) display = fmtVN(it.num, 1);
+    else if(typeof it.num === 'number' && !Number.isInteger(it.num)) display = fmtVN(it.num, 1);
+    else display = fmtCount(it.num);
+    return `
     <div class="kpi ${it.tone}">
-      <div class="num">${it.num}<span class="unit">${it.unit}</span></div>
+      <div class="num">${display}<span class="unit">${it.unit}</span></div>
       <div class="lbl">${it.lbl}</div>
-    </div>`).join('');
+    </div>`;
+  }).join('');
 }
 
 // ============ TABS ============
@@ -542,10 +718,9 @@ function barChart(ctx, labels, datasets, opts={}){
             const v = ds.data[i]; if(v==null || v===0) return;
             let label;
             if(asCount){
-              const pct = (v / totalN * 100).toFixed(1);
-              label = pct + '%';
+              label = fmtPct(v / totalN * 100, 1);
             } else {
-              label = v + '%';
+              label = fmtPct(v);
             }
             if(horizontal){
               ctx.textAlign='left'; ctx.textBaseline='middle';
@@ -567,10 +742,9 @@ function barChart(ctx, labels, datasets, opts={}){
         legend:{ display: datasets.length>1, position:'bottom', labels:{font:{size:10.5}} },
         tooltip:{ callbacks:{ label: (c)=>{
           if(asCount){
-            const pct = (c.raw / totalN * 100).toFixed(1);
-            return (c.dataset.label?c.dataset.label+': ':'') + c.raw.toLocaleString('vi-VN') + ' (' + pct + '%)';
+            return (c.dataset.label?c.dataset.label+': ':'') + fmtCount(c.raw) + ' (' + fmtPct(c.raw / totalN * 100, 1) + ')';
           }
-          return (c.dataset.label?c.dataset.label+': ':'') + c.raw + '%';
+          return (c.dataset.label?c.dataset.label+': ':'') + fmtPct(c.raw);
         } } },
       },
       scales:{
@@ -599,7 +773,7 @@ function labeledBar(canvasId, labels, values, opts={}){
         chart.data.datasets[0].data.forEach((v,i)=>{
           const meta = chart.getDatasetMeta(0).data[i];
           if(v==null) return;
-          const label = opts.absolute ? (typeof v==='number' ? v.toLocaleString('vi-VN') : v) : (v + '%');
+          const label = opts.absolute ? (typeof v==='number' ? fmtCount(v) : v) : fmtPct(v);
           if(horizontal){
             ctx.textAlign='left'; ctx.textBaseline='middle';
             ctx.fillText(label, meta.x+6, meta.y);
@@ -617,7 +791,7 @@ function labeledBar(canvasId, labels, values, opts={}){
       layout:{padding:{right: horizontal?48:0, top: horizontal?0:14, left: horizontal?(opts.leftPad||0):0}},
       plugins:{
         legend:{display:false},
-        tooltip:{callbacks:{ label:(c)=> opts.absolute ? (c.raw.toLocaleString ? c.raw.toLocaleString('vi-VN') : c.raw) + ' KH' : (c.raw + '%') }}
+        tooltip:{callbacks:{ label:(c)=> opts.absolute ? (fmtCount(c.raw) + ' KH') : fmtPct(c.raw) }}
       },
       scales:{
         x:{ display: horizontal, grid:{color:'#EEF3F2'}, ticks:{font:{size:10.5}}, beginAtZero:true, max: opts.max },
@@ -658,18 +832,18 @@ function productStackedBar(canvasId, labels, frequent, occasional, opts={}){
           ctx.font = '700 ' + fs + 'px -apple-system, sans-serif';
           ctx.textAlign = 'left';
           ctx.textBaseline = 'middle';
-          ctx.fillText(total + '%', meta1.x + 6, meta1.y);
+          ctx.fillText(fmtPct(total, 1), meta1.x + 6, meta1.y);
           if(freq >= 12){
             ctx.fillStyle = '#fff';
             ctx.font = '600 ' + fsIn + 'px -apple-system, sans-serif';
             ctx.textAlign = 'center';
-            ctx.fillText(freq + '%', meta0.base + (meta0.x - meta0.base) / 2, meta0.y);
+            ctx.fillText(fmtPct(freq), meta0.base + (meta0.x - meta0.base) / 2, meta0.y);
           }
           if(occ >= 10){
             ctx.fillStyle = '#132625';
             ctx.font = '600 ' + fsIn + 'px -apple-system, sans-serif';
             ctx.textAlign = 'center';
-            ctx.fillText(occ + '%', meta1.base + (meta1.x - meta1.base) / 2, meta1.y);
+            ctx.fillText(fmtPct(occ), meta1.base + (meta1.x - meta1.base) / 2, meta1.y);
           }
         }
         ctx.restore();
@@ -684,17 +858,17 @@ function productStackedBar(canvasId, labels, frequent, occasional, opts={}){
         legend: { position: 'bottom', labels: { font: { size: 11 }, usePointStyle: true, padding: 14 } },
         tooltip: {
           callbacks: {
-            label: (c) => c.dataset.label + ': ' + c.raw + '%',
+            label: (c) => c.dataset.label + ': ' + fmtPct(c.raw),
             footer: (items) => {
               if(!items.length) return '';
               const sum = items.reduce((a,b)=>a+b.raw, 0);
-              return 'Tích cực: ' + sum.toFixed(1) + '%';
+              return 'Tích cực: ' + fmtPct(sum, 1);
             }
           }
         }
       },
       scales: {
-        x: { stacked: true, grid: { color: '#EEF3F2' }, ticks: { font: { size: 10.5 }, callback: (v) => v + '%' }, beginAtZero: true, max: opts.max || 110 },
+        x: { stacked: true, grid: { color: '#EEF3F2' }, ticks: { font: { size: 10.5 }, callback: (v) => fmtPct(v, 0) }, beginAtZero: true, max: opts.max || 110 },
         y: { stacked: true, grid: { display: false }, ticks: { font: { size: opts.yFontSize || 10.5 } } }
       }
     }
@@ -720,7 +894,7 @@ function groupedBar(canvasId, labels, series, opts={}){
         chart.data.datasets.forEach((ds,di)=>{
           chart.getDatasetMeta(di).data.forEach((bar,i)=>{
             const v=ds.data[i]; if(v==null||v<3) return;
-            ctx.fillText(v+'%', bar.x, bar.y-2);
+            ctx.fillText(fmtPct(v), bar.x, bar.y-2);
           });
         });
         ctx.restore();
@@ -731,11 +905,11 @@ function groupedBar(canvasId, labels, series, opts={}){
       layout:{padding:{top:12}},
       plugins:{
         legend:{ position:'bottom', labels:{font:{size:10.5}} },
-        tooltip:{callbacks:{label:(c)=>`${c.dataset.label}: ${c.raw}%`}}
+        tooltip:{callbacks:{label:(c)=> c.dataset.label + ': ' + fmtPct(c.raw)}}
       },
       scales:{
         x:{ grid:{display:false}, ticks:{font:{size: opts.xFontSize||10}} },
-        y:{ grid:{color:'#EEF3F2'}, beginAtZero:true, ticks:{font:{size:10.5}} }
+        y:{ grid:{color:'#EEF3F2'}, beginAtZero:true, ticks:{font:{size:10.5}, callback:(v)=>fmtVN(v)} }
       }
     }
   });
@@ -764,7 +938,7 @@ function donutChart(canvasId, labels, values, opts={}){
           const fs = getChartLabelSize(chart, 11);
           ctx.font = '700 ' + fs + 'px -apple-system, sans-serif';
           ctx.textAlign = 'center'; ctx.textBaseline = 'middle';
-          ctx.fillText(pct.toFixed(1) + '%', arc.x + Math.cos(mid)*r, arc.y + Math.sin(mid)*r);
+          ctx.fillText(fmtPct(pct, 1), arc.x + Math.cos(mid)*r, arc.y + Math.sin(mid)*r);
         });
         ctx.restore();
       }
@@ -776,7 +950,7 @@ function donutChart(canvasId, labels, values, opts={}){
         legend:{position:'bottom', labels:{font:{size:10.5}, padding:12}},
         tooltip:{callbacks:{label:(c)=>{
           const v=c.raw; const pct = asPct ? v : (v/total*100);
-          return c.label + ': ' + pct.toFixed(1) + '%';
+          return c.label + ': ' + fmtPct(pct, 1);
         }}}
       }
     }
@@ -802,7 +976,7 @@ function compareBar(canvasId, labels, allVals, segVals, allLabel, segLabel){
         chart.data.datasets.forEach((ds,di)=>{
           chart.getDatasetMeta(di).data.forEach((bar,i)=>{
             const v=ds.data[i]; if(v==null||v<1) return;
-            ctx.fillText(v+'%', bar.x, bar.y-2);
+            ctx.fillText(fmtPct(v), bar.x, bar.y-2);
           });
         });
         ctx.restore();
@@ -811,8 +985,8 @@ function compareBar(canvasId, labels, allVals, segVals, allLabel, segLabel){
     options:{
       responsive:true, maintainAspectRatio:false,
       layout:{padding:{top:12}},
-      plugins:{ legend:{position:'bottom', labels:{font:{size:10.5}}}, tooltip:{callbacks:{label:(c)=>`${c.dataset.label}: ${c.raw}%`}} },
-      scales:{ x:{grid:{display:false}, ticks:{font:{size:10}}}, y:{grid:{color:'#EEF3F2'}, beginAtZero:true} }
+      plugins:{ legend:{position:'bottom', labels:{font:{size:10.5}}}, tooltip:{callbacks:{label:(c)=> c.dataset.label + ': ' + fmtPct(c.raw)}} },
+      scales:{ x:{grid:{display:false}, ticks:{font:{size:10}}}, y:{grid:{color:'#EEF3F2'}, beginAtZero:true, ticks:{callback:(v)=>fmtVN(v)}} }
     }
   });
 }
@@ -1023,7 +1197,7 @@ RENDERERS.products = function(){
   // Multi-bank (65.3%)
   const MB = DATA.multi_bank;
   donutChart('pr_o_mb_donut',
-    ['GD thêm NH khác ('+MB.n_other.toLocaleString('vi-VN')+')','Chỉ BIDV ('+MB.n_only_bidv.toLocaleString('vi-VN')+')'],
+    ['GD thêm NH khác ('+fmtCount(MB.n_other)+')','Chỉ BIDV ('+fmtCount(MB.n_only_bidv)+')'],
     [MB.overall_pct, +(100-MB.overall_pct).toFixed(1)],
     {colors:[GOLD, TEAL], asPct:true});
   labeledBar('pr_o_mb_banks', MB.banks.labels, MB.banks.values, {absolute:true, colors:[TEAL,TEAL_MID,GOLD,'#7AB8B5','#A8D0CE'], max:Math.max(...MB.banks.values)*1.2, yFontSize:11});
@@ -1220,11 +1394,11 @@ RENDERERS.satisfaction = function(){
       const {ctx}=chart; ctx.save(); const fs=getChartLabelSize(chart,9); ctx.font='600 '+fs+'px -apple-system,sans-serif'; ctx.fillStyle=dataLabelColor;
       ctx.textAlign='center'; ctx.textBaseline='bottom';
       chart.data.datasets.forEach((ds,di)=>{ chart.getDatasetMeta(di).data.forEach((bar,i)=>{
-        const v=ds.data[i]; if(v>=1) ctx.fillText(v+'%', bar.x, bar.y-2);
+        const v=ds.data[i]; if(v>=1) ctx.fillText(fmtPct(v), bar.x, bar.y-2);
       }); }); ctx.restore();
     }}],
     options:{ responsive:true, maintainAspectRatio:false, layout:{padding:{top:12}},
-      plugins:{legend:{position:'bottom', labels:{font:{size:10.5}}}, tooltip:{callbacks:{label:(c)=>`${c.dataset.label}: ${c.raw}%`}}},
+      plugins:{legend:{position:'bottom', labels:{font:{size:10.5}}}, tooltip:{callbacks:{label:(c)=> c.dataset.label + ': ' + fmtPct(c.raw)}}},
       scales:{x:{grid:{display:false}, ticks:{font:{size:9.5}}}, y:{grid:{color:'#EEF3F2'}, beginAtZero:true}} }
   });
   labeledBar('sa_o_dig', S.dig_labels, S.overall.digital, {max:Math.max(...S.overall.digital)*1.2});
@@ -1237,17 +1411,17 @@ RENDERERS.satisfaction = function(){
       backgroundColor:[NEG, '#D9906F'], borderRadius:6, barPercentage:0.55
     }]},
     plugins:[{id:'vl', afterDatasetsDraw(ch){ const {ctx}=ch; ctx.save(); ctx.fillStyle=dataLabelColor; ctx.font='700 '+getChartLabelSize(ch,12)+'px sans-serif'; ctx.textAlign='center';
-      ch.getDatasetMeta(0).data.forEach((bar,i)=>{ const v=ch.data.datasets[0].data[i]; ctx.fillText(v+'%', bar.x, bar.y-6); });
+      ch.getDatasetMeta(0).data.forEach((bar,i)=>{ const v=ch.data.datasets[0].data[i]; ctx.fillText(fmtPct(v), bar.x, bar.y-6); });
       ctx.restore(); }}],
     options:{ responsive:true, maintainAspectRatio:false, plugins:{legend:{display:false},
-      tooltip:{callbacks:{label:(c)=>c.raw+'%'}}},
+      tooltip:{callbacks:{label:(c)=> fmtPct(c.raw)}}},
       scales:{x:{grid:{display:false}}, y:{grid:{color:'#EEF3F2'}, beginAtZero:true, max:15}} }
   });
 
   // Donut: hài lòng vs không hài lòng ít nhất 1 mặt
   const nOk = u.n_total - u.n_unsat;
   donutChart('sa_o_unsat_any',
-    ['Không HL ≥1 mặt ('+u.n_unsat+' KH)','Còn lại ('+nOk.toLocaleString('vi-VN')+' KH)'],
+    ['Không HL ≥1 mặt ('+fmtCount(u.n_unsat)+' KH)','Còn lại ('+fmtCount(nOk)+' KH)'],
     [u.pct_unsat, +(100-u.pct_unsat).toFixed(1)],
     {colors:[NEG, TEAL], asPct:true});
 
@@ -1290,11 +1464,11 @@ RENDERERS.satisfaction = function(){
         const {ctx}=chart; ctx.save(); const fs=getChartLabelSize(chart,9); ctx.font='600 '+fs+'px -apple-system,sans-serif'; ctx.fillStyle=dataLabelColor;
         ctx.textAlign='center'; ctx.textBaseline='bottom';
         chart.data.datasets.forEach((ds,di)=>{ chart.getDatasetMeta(di).data.forEach((bar,i)=>{
-          const v=ds.data[i]; if(v!=null && v>=1) ctx.fillText(v+'%', bar.x, bar.y-2);
+          const v=ds.data[i]; if(v!=null && v>=1) ctx.fillText(fmtPct(v), bar.x, bar.y-2);
         }); }); ctx.restore();
       }}],
       options:{responsive:true, maintainAspectRatio:false, layout:{padding:{top:12}},
-        plugins:{legend:{position:'bottom', labels:{font:{size:10.5}}}, tooltip:{callbacks:{label:(c)=>c.dataset.label+': '+c.raw+'%'}}},
+        plugins:{legend:{position:'bottom', labels:{font:{size:10.5}}}, tooltip:{callbacks:{label:(c)=> c.dataset.label + ': ' + fmtPct(c.raw)}}},
         scales:{x:{grid:{display:false}, ticks:{font:{size:10}}}, y:{grid:{color:'#EEF3F2'}, beginAtZero:true}}}
     });
   }
@@ -1472,12 +1646,12 @@ RENDERERS.segments = function(){
       const {ctx}=chart; ctx.save(); const fs=getChartLabelSize(chart,9); ctx.font='600 '+fs+'px -apple-system,sans-serif'; ctx.fillStyle=dataLabelColor;
       ctx.textAlign='center'; ctx.textBaseline='bottom';
       chart.data.datasets.forEach((ds,di)=>{ chart.getDatasetMeta(di).data.forEach((bar,i)=>{
-        const v=ds.data[i]; if(v!=null && v>=1) ctx.fillText(v+'%', bar.x, bar.y-2);
+        const v=ds.data[i]; if(v!=null && v>=1) ctx.fillText(fmtPct(v), bar.x, bar.y-2);
       }); }); ctx.restore();
     }}],
     options:{responsive:true, maintainAspectRatio:false, layout:{padding:{top:12}},
         plugins:{legend:{position:'bottom', labels:{font:{size:10.5}}},
-          tooltip:{callbacks:{label:(c)=>c.dataset.label+': '+c.raw+'%'}}},
+          tooltip:{callbacks:{label:(c)=> c.dataset.label + ': ' + fmtPct(c.raw)}}},
         scales:{x:{grid:{display:false}}, y:{grid:{color:'#EEF3F2'}, beginAtZero:true}}}
     });
     new Chart(document.getElementById('sg_a_sat'), {
@@ -1490,12 +1664,12 @@ RENDERERS.segments = function(){
       const {ctx}=chart; ctx.save(); const fs=getChartLabelSize(chart,9); ctx.font='600 '+fs+'px -apple-system,sans-serif'; ctx.fillStyle=dataLabelColor;
       ctx.textAlign='center'; ctx.textBaseline='bottom';
       chart.data.datasets.forEach((ds,di)=>{ chart.getDatasetMeta(di).data.forEach((bar,i)=>{
-        const v=ds.data[i]; if(v!=null && v>=1) ctx.fillText(v+'%', bar.x, bar.y-2);
+        const v=ds.data[i]; if(v!=null && v>=1) ctx.fillText(fmtPct(v), bar.x, bar.y-2);
       }); }); ctx.restore();
     }}],
     options:{responsive:true, maintainAspectRatio:false, layout:{padding:{top:12}},
         plugins:{legend:{position:'bottom', labels:{font:{size:10.5}}},
-          tooltip:{callbacks:{label:(c)=>c.dataset.label+': '+c.raw+'%'}}},
+          tooltip:{callbacks:{label:(c)=> c.dataset.label + ': ' + fmtPct(c.raw)}}},
         scales:{x:{grid:{display:false}}, y:{grid:{color:'#EEF3F2'}, beginAtZero:true}}}
     });
   }
@@ -1515,11 +1689,11 @@ RENDERERS.segments = function(){
       const {ctx}=chart; ctx.save(); const fs=getChartLabelSize(chart,9); ctx.font='600 '+fs+'px -apple-system,sans-serif'; ctx.fillStyle=dataLabelColor;
       ctx.textAlign='center'; ctx.textBaseline='bottom';
       chart.data.datasets.forEach((ds,di)=>{ chart.getDatasetMeta(di).data.forEach((bar,i)=>{
-        const v=ds.data[i]; if(v!=null && v>=1) ctx.fillText(v+'%', bar.x, bar.y-2);
+        const v=ds.data[i]; if(v!=null && v>=1) ctx.fillText(fmtPct(v), bar.x, bar.y-2);
       }); }); ctx.restore();
     }}],
     options:{responsive:true, maintainAspectRatio:false,
-        plugins:{legend:{position:'bottom', labels:{font:{size:10.5}}}, tooltip:{callbacks:{label:(c)=>`${c.dataset.label}: ${c.raw}%`}}},
+        plugins:{legend:{position:'bottom', labels:{font:{size:10.5}}}, tooltip:{callbacks:{label:(c)=> c.dataset.label + ': ' + fmtPct(c.raw)}}},
         scales:{x:{grid:{display:false}}, y:{grid:{color:'#EEF3F2'}, beginAtZero:true}}}
     });
     new Chart(document.getElementById('sg_i_sat'), {
@@ -1532,11 +1706,11 @@ RENDERERS.segments = function(){
       const {ctx}=chart; ctx.save(); const fs=getChartLabelSize(chart,9); ctx.font='600 '+fs+'px -apple-system,sans-serif'; ctx.fillStyle=dataLabelColor;
       ctx.textAlign='center'; ctx.textBaseline='bottom';
       chart.data.datasets.forEach((ds,di)=>{ chart.getDatasetMeta(di).data.forEach((bar,i)=>{
-        const v=ds.data[i]; if(v!=null && v>=1) ctx.fillText(v+'%', bar.x, bar.y-2);
+        const v=ds.data[i]; if(v!=null && v>=1) ctx.fillText(fmtPct(v), bar.x, bar.y-2);
       }); }); ctx.restore();
     }}],
     options:{responsive:true, maintainAspectRatio:false,
-        plugins:{legend:{position:'bottom', labels:{font:{size:10.5}}}, tooltip:{callbacks:{label:(c)=>`${c.dataset.label}: ${c.raw}%`}}},
+        plugins:{legend:{position:'bottom', labels:{font:{size:10.5}}}, tooltip:{callbacks:{label:(c)=> c.dataset.label + ': ' + fmtPct(c.raw)}}},
         scales:{x:{grid:{display:false}}, y:{grid:{color:'#EEF3F2'}, beginAtZero:true}}}
     });
     groupedBar('sg_i_invest', DATA.cross_income_invest.labels, DATA.cross_income_invest.series, {xFontSize:10});
@@ -1587,7 +1761,7 @@ RENDERERS.trends = function(){
   const T = DATA.cross_trends;
   el.innerHTML = `
     <div class="section-title"><span class="bar"></span>Xu hướng & Ý kiến của khách hàng</div>
-    <div class="section-desc">Kế hoạch tài chính, hiểu biết TC và mong muốn cải thiện — lọc theo <b>Toàn mẫu</b>, nhóm tuổi, hôn nhân, thu nhập, số con (cùng cấu trúc tab Phân khúc).</div>
+    <div class="section-desc">Kế hoạch tài chính, hiểu biết TC, mong muốn cải thiện và <b>yếu tố mở rộng giao dịch</b> — lọc theo Toàn mẫu, tuổi, hôn nhân, thu nhập, số con, miền, nghề nghiệp.</div>
     <div class="seg-toggle">
       <button class="seg-btn active" data-tr="overall">Toàn mẫu</button>
       <button class="seg-btn" data-tr="age">Theo nhóm tuổi</button>
@@ -1604,35 +1778,45 @@ RENDERERS.trends = function(){
         <div class="card"><h3>Tự đánh giá hiểu biết tài chính</h3><div class="chart-box h-300"><canvas id="tr_o_lit"></canvas></div></div>
       </div>
       <div class="card" style="margin-top:18px"><h3>Mong muốn cải thiện dịch vụ</h3><div class="chart-box h-340"><canvas id="tr_o_imp"></canvas></div></div>
-      <div class="insight teal" style="margin-top:16px"><b>Toàn mẫu (N=${DATA.N.toLocaleString('vi-VN')}):</b> Mua nhà (47,6%), đầu tư TC (35,9%), khởi nghiệp (27,8%) là 3 kế hoạch hàng đầu. Mong muốn cải thiện tập trung ưu đãi theo quy mô GD, CSKH và đa dạng sản phẩm.</div>
+      <div class="card" style="margin-top:18px"><h3>Yếu tố quan trọng khi mở rộng giao dịch với ngân hàng</h3><div class="card-sub">% khách hàng chọn (có thể chọn nhiều)</div><div class="chart-box h-360"><canvas id="tr_o_expand"></canvas></div></div>
+      <div class="card" style="margin-top:18px"><h3>Sử dụng dịch vụ tư vấn tài chính</h3><div class="card-sub">Phân bố mức độ sử dụng dịch vụ tư vấn tài chính (%)</div><div class="chart-box h-320"><canvas id="tr_o_advuse"></canvas></div></div>
+      <div class="insight teal" style="margin-top:16px"><b>Toàn mẫu (N=${DATA.N.toLocaleString('vi-VN')}):</b> Mua nhà (47,6%), đầu tư TC (35,9%), khởi nghiệp (27,8%) là 3 kế hoạch hàng đầu. Yếu tố mở rộng GD: CSKH tốt (84,2%), SP phù hợp nhu cầu (55,4%), thông báo SP/DV mới (37,5%).</div>
     </div>
 
     <div class="seg-view" id="tr-age">
       <div class="card"><h3>Kế hoạch tài chính theo nhóm tuổi (có dòng Toàn mẫu)</h3><div class="chart-box h-480"><canvas id="tr_a_goal"></canvas></div></div>
       <div class="card" style="margin-top:18px"><h3>Tự đánh giá hiểu biết tài chính theo nhóm tuổi</h3><div class="chart-box h-360"><canvas id="tr_a_lit"></canvas></div></div>
       <div class="card" style="margin-top:18px"><h3>Mong muốn cải thiện theo nhóm tuổi</h3><div class="chart-box h-480"><canvas id="tr_a_imp"></canvas></div></div>
-      <div class="insight" style="margin-top:16px"><b>Theo tuổi:</b> ≤25 ưu tiên khởi nghiệp & du học; 26–35 mua nhà cao nhất; ≥56 nghỉ hưu nổi bật. Nhu cầu cải thiện CSKH/ưu đãi khá đồng đều giữa các nhóm tuổi.</div>
+      <div class="card" style="margin-top:18px"><h3>Yếu tố mở rộng GD theo nhóm tuổi (có Toàn mẫu)</h3><div class="card-sub">% khách hàng chọn yếu tố (có thể chọn nhiều)</div><div class="chart-box h-420"><canvas id="tr_a_expand"></canvas></div></div>
+      <div class="card" style="margin-top:18px"><h3>Sử dụng DV tư vấn TC theo nhóm tuổi (có Toàn mẫu)</h3><div class="card-sub">Phân bố mức độ sử dụng dịch vụ tư vấn tài chính (%)</div><div class="chart-box h-400"><canvas id="tr_a_advuse"></canvas></div></div>
+      <div class="insight" style="margin-top:16px"><b>Theo tuổi:</b> ≤25 ưu tiên khởi nghiệp & du học; 26–35 mua nhà cao nhất; ≥56 nghỉ hưu nổi bật. CSKH tốt dẫn đầu mọi nhóm tuổi khi mở rộng GD.</div>
     </div>
 
     <div class="seg-view" id="tr-marital">
       <div class="card"><h3>Kế hoạch tài chính theo hôn nhân (có dòng Toàn mẫu)</h3><div class="chart-box h-400"><canvas id="tr_m_goal"></canvas></div></div>
       <div class="card" style="margin-top:18px"><h3>Tự đánh giá hiểu biết tài chính theo hôn nhân</h3><div class="chart-box h-360"><canvas id="tr_m_lit"></canvas></div></div>
       <div class="card" style="margin-top:18px"><h3>Mong muốn cải thiện theo hôn nhân</h3><div class="chart-box h-400"><canvas id="tr_m_imp"></canvas></div></div>
-      <div class="insight teal" style="margin-top:16px">Nhóm chưa kết hôn ưu tiên khởi nghiệp nhiều hơn; nhóm đang hôn nhân ưu tiên trả nợ / mua nhà — phản ánh gánh nặng tài chính gia đình.</div>
+      <div class="card" style="margin-top:18px"><h3>Yếu tố mở rộng GD theo hôn nhân (có Toàn mẫu)</h3><div class="card-sub">% khách hàng chọn yếu tố (có thể chọn nhiều)</div><div class="chart-box h-400"><canvas id="tr_m_expand"></canvas></div></div>
+      <div class="card" style="margin-top:18px"><h3>Sử dụng DV tư vấn TC theo hôn nhân (có Toàn mẫu)</h3><div class="card-sub">Phân bố mức độ sử dụng dịch vụ tư vấn tài chính (%)</div><div class="chart-box h-400"><canvas id="tr_m_advuse"></canvas></div></div>
+      <div class="insight teal" style="margin-top:16px">Nhóm chưa kết hôn ưu tiên khởi nghiệp nhiều hơn; nhóm đang hôn nhân ưu tiên trả nợ / mua nhà. CSKH tốt là yếu tố mở rộng GD hàng đầu ở mọi tình trạng hôn nhân.</div>
     </div>
 
     <div class="seg-view" id="tr-income">
       <div class="card"><h3>Kế hoạch tài chính theo thu nhập (có dòng Toàn mẫu)</h3><div class="chart-box h-400"><canvas id="tr_i_goal"></canvas></div></div>
       <div class="card" style="margin-top:18px"><h3>Tự đánh giá hiểu biết tài chính theo thu nhập</h3><div class="chart-box h-360"><canvas id="tr_i_lit"></canvas></div></div>
       <div class="card" style="margin-top:18px"><h3>Mong muốn cải thiện theo thu nhập</h3><div class="chart-box h-400"><canvas id="tr_i_imp"></canvas></div></div>
-      <div class="insight" style="margin-top:16px">Thu nhập cao hơn thường đi kèm tỷ trọng kế hoạch đầu tư TC và mong muốn sản phẩm đa dạng / thông tin kinh tế rõ hơn.</div>
+      <div class="card" style="margin-top:18px"><h3>Yếu tố mở rộng GD theo thu nhập (có Toàn mẫu)</h3><div class="card-sub">% khách hàng chọn yếu tố (có thể chọn nhiều)</div><div class="chart-box h-400"><canvas id="tr_i_expand"></canvas></div></div>
+      <div class="card" style="margin-top:18px"><h3>Sử dụng DV tư vấn TC theo thu nhập (có Toàn mẫu)</h3><div class="card-sub">Phân bố mức độ sử dụng dịch vụ tư vấn tài chính (%)</div><div class="chart-box h-400"><canvas id="tr_i_advuse"></canvas></div></div>
+      <div class="insight" style="margin-top:16px">Thu nhập cao hơn thường đi kèm kế hoạch đầu tư TC. CSKH tốt (~84%) dẫn đầu mở rộng GD ở mọi mức thu nhập.</div>
     </div>
 
     <div class="seg-view" id="tr-children">
       <div class="card"><h3>Kế hoạch tài chính theo số con (có dòng Toàn mẫu)</h3><div class="chart-box h-400"><canvas id="tr_c_goal"></canvas></div></div>
       <div class="card" style="margin-top:18px"><h3>Tự đánh giá hiểu biết tài chính theo số con</h3><div class="chart-box h-360"><canvas id="tr_c_lit"></canvas></div></div>
       <div class="card" style="margin-top:18px"><h3>Mong muốn cải thiện theo số con</h3><div class="chart-box h-400"><canvas id="tr_c_imp"></canvas></div></div>
-      <div class="insight teal" style="margin-top:16px">Khi số con tăng, ưu tiên mua nhà/khởi nghiệp giảm dần; trả nợ và nghỉ hưu tăng — dịch chuyển sang bảo vệ tài chính hiện có.</div>
+      <div class="card" style="margin-top:18px"><h3>Yếu tố mở rộng GD theo số con (có Toàn mẫu)</h3><div class="card-sub">% khách hàng chọn yếu tố (có thể chọn nhiều)</div><div class="chart-box h-400"><canvas id="tr_c_expand"></canvas></div></div>
+      <div class="card" style="margin-top:18px"><h3>Sử dụng DV tư vấn TC theo số con (có Toàn mẫu)</h3><div class="card-sub">Phân bố mức độ sử dụng dịch vụ tư vấn tài chính (%)</div><div class="chart-box h-400"><canvas id="tr_c_advuse"></canvas></div></div>
+      <div class="insight teal" style="margin-top:16px">Khi số con tăng, ưu tiên mua nhà/khởi nghiệp giảm dần. CSKH tốt vẫn là yếu tố mở rộng GD thống trị mọi nhóm.</div>
     </div>
 
     <div class="section-title" style="margin-top:22px"><span class="bar"></span>Ý kiến tiêu biểu của khách hàng</div>
@@ -1657,13 +1841,17 @@ RENDERERS.trends = function(){
         <div class="card"><h3>% Không hài lòng theo miền</h3><div class="chart-box h-260"><canvas id="tr_r_unsat"></canvas></div></div>
         <div class="card"><h3>% Sẵn sàng số theo miền</h3><div class="chart-box h-260"><canvas id="tr_r_dig"></canvas></div></div>
       </div>
-      <div class="insight teal" style="margin-top:16px"><b>Theo miền:</b> Cơ cấu kế hoạch khá gần nhau giữa 3 miền.</div>
+      <div class="card" style="margin-top:18px"><h3>Yếu tố mở rộng GD theo miền (có Toàn mẫu)</h3><div class="card-sub">% khách hàng chọn yếu tố (có thể chọn nhiều)</div><div class="chart-box h-400"><canvas id="tr_r_expand"></canvas></div></div>
+      <div class="card" style="margin-top:18px"><h3>Sử dụng DV tư vấn TC theo miền (có Toàn mẫu)</h3><div class="card-sub">Phân bố mức độ sử dụng dịch vụ tư vấn tài chính (%)</div><div class="chart-box h-400"><canvas id="tr_r_advuse"></canvas></div></div>
+      <div class="insight teal" style="margin-top:16px"><b>Theo miền:</b> Cơ cấu kế hoạch khá gần nhau. CSKH tốt là yếu tố mở rộng GD hàng đầu ở cả 3 miền.</div>
     </div>
     <div class="seg-view" id="tr-occupation">
       <div class="card"><h3>Kế hoạch tài chính theo nghề (có Toàn mẫu)</h3><div class="chart-box h-480"><canvas id="tr_oc_goal"></canvas></div></div>
       <div class="card" style="margin-top:18px"><h3>% Không hài lòng ≥1 mặt theo nghề</h3><div class="chart-box h-400"><canvas id="tr_oc_unsat"></canvas></div></div>
       <div class="card" style="margin-top:18px"><h3>% Sẵn sàng ngân hàng số theo nghề</h3><div class="chart-box h-400"><canvas id="tr_oc_dig"></canvas></div></div>
-      <div class="insight" style="margin-top:16px"><b>Theo nghề:</b> Nghề ảnh hưởng rõ đến sẵn sàng số và định hướng kế hoạch TC. Quản lý sẵn sàng số cao; Chuyên gia không HL cao hơn trung bình.</div>
+      <div class="card" style="margin-top:18px"><h3>Yếu tố mở rộng GD theo nghề (có Toàn mẫu)</h3><div class="chart-box h-480"><canvas id="tr_oc_expand"></canvas></div></div>
+      <div class="card" style="margin-top:18px"><h3>Sử dụng DV tư vấn TC theo nghề (có Toàn mẫu)</h3><div class="card-sub">Phân bố mức độ sử dụng dịch vụ tư vấn tài chính (%)</div><div class="chart-box h-420"><canvas id="tr_oc_advuse"></canvas></div></div>
+      <div class="insight" style="margin-top:16px"><b>Theo nghề:</b> Nghề ảnh hưởng rõ đến sẵn sàng số và định hướng kế hoạch TC. CSKH tốt vẫn là yếu tố mở rộng GD thống trị mọi nghề.</div>
     </div>
 `;
 
@@ -1671,6 +1859,11 @@ RENDERERS.trends = function(){
   labeledBar('tr_o_goal', T.goal_labels, T.overall.goals, {max:Math.max(...T.overall.goals)*1.25});
   donutChart('tr_o_lit', T.lit_labels, T.overall.literacy, {colors:[NEG,'#D9906F',GREY,TEAL_MID,TEAL], asPct:true});
   labeledBar('tr_o_imp', T.imp_labels, T.overall.improve, {max:Math.max(...T.overall.improve)*1.25, yFontSize:10.5});
+  const EF = DATA.expand_factors;
+  labeledBar('tr_o_expand', EF.labels, EF.overall, {max:Math.max(...EF.overall)*1.2, yFontSize:11});
+  const AU = DATA.advisory_use;
+  // stacked-style via grouped single series -> use labeledBar for overall distribution
+  labeledBar('tr_o_advuse', AU.labels, AU.overall, {max:Math.max(...AU.overall)*1.25, yFontSize:11, colors:[TEAL, TEAL_MID, GOLD, '#D9906F', NEG]});
 
   const initedTr = new Set(['overall']);
   const ageColors = [GOLD, TEAL_MID, TEAL, '#7AB8B5', '#A8D0CE', '#132625'];
@@ -1682,21 +1875,29 @@ RENDERERS.trends = function(){
     groupedBar('tr_a_goal', T.goal_labels, T.age.series_goal, {xFontSize:9, colors:ageColors});
     groupedBar('tr_a_lit', T.lit_labels, T.age.series_lit, {xFontSize:10, colors:ageColors});
     groupedBar('tr_a_imp', T.imp_labels, T.age.series_imp, {xFontSize:9, colors:ageColors});
+    groupedBar('tr_a_expand', DATA.expand_factors.labels, DATA.expand_factors.age, {xFontSize:9, colors:ageColors});
+    groupedBar('tr_a_advuse', DATA.advisory_use.labels, DATA.advisory_use.age, {xFontSize:9, colors:ageColors});
   }
   function initTrMarital(){
     groupedBar('tr_m_goal', T.goal_labels, T.marital.series_goal, {xFontSize:9, colors:marColors});
     groupedBar('tr_m_lit', T.lit_labels, T.marital.series_lit, {xFontSize:10, colors:marColors});
     groupedBar('tr_m_imp', T.imp_labels, T.marital.series_imp, {xFontSize:9, colors:marColors});
+    groupedBar('tr_m_expand', DATA.expand_factors.labels, DATA.expand_factors.marital, {xFontSize:9, colors:marColors});
+    groupedBar('tr_m_advuse', DATA.advisory_use.labels, DATA.advisory_use.marital, {xFontSize:9, colors:marColors});
   }
   function initTrIncome(){
     groupedBar('tr_i_goal', T.goal_labels, T.income.series_goal, {xFontSize:9, colors:incColors});
     groupedBar('tr_i_lit', T.lit_labels, T.income.series_lit, {xFontSize:10, colors:incColors});
     groupedBar('tr_i_imp', T.imp_labels, T.income.series_imp, {xFontSize:9, colors:incColors});
+    groupedBar('tr_i_expand', DATA.expand_factors.labels, DATA.expand_factors.income, {xFontSize:9, colors:incColors});
+    groupedBar('tr_i_advuse', DATA.advisory_use.labels, DATA.advisory_use.income, {xFontSize:9, colors:incColors});
   }
   function initTrChildren(){
     groupedBar('tr_c_goal', T.goal_labels, T.children.series_goal, {xFontSize:9, colors:chColors});
     groupedBar('tr_c_lit', T.lit_labels, T.children.series_lit, {xFontSize:10, colors:chColors});
     groupedBar('tr_c_imp', T.imp_labels, T.children.series_imp, {xFontSize:9, colors:chColors});
+    groupedBar('tr_c_expand', DATA.expand_factors.labels, DATA.expand_factors.children, {xFontSize:9, colors:chColors});
+    groupedBar('tr_c_advuse', DATA.advisory_use.labels, DATA.advisory_use.children, {xFontSize:9, colors:chColors});
   }
   function initTrRegion(){
     const R = DATA.cross_reg_occ.region;
@@ -1705,6 +1906,8 @@ RENDERERS.trends = function(){
     groupedBar('tr_r_goal', R.goals.labels, gser, {xFontSize:9, colors:[GOLD, TEAL, TEAL_MID, '#7AB8B5']});
     labeledBar('tr_r_unsat', R.labels, R.unsat, {max:20, colors:[NEG, '#D9906F', GOLD]});
     labeledBar('tr_r_dig', R.labels, R.dig_ready, {max:80, colors:[TEAL, TEAL_MID, GOLD]});
+    groupedBar('tr_r_expand', DATA.expand_factors.labels, DATA.expand_factors.region, {xFontSize:9, colors:[GOLD, TEAL, TEAL_MID, '#7AB8B5']});
+    groupedBar('tr_r_advuse', DATA.advisory_use.labels, DATA.advisory_use.region, {xFontSize:9, colors:[GOLD, TEAL, TEAL_MID, '#7AB8B5']});
   }
   function initTrOccupation(){
     const O = DATA.cross_reg_occ.occupation;
@@ -1713,6 +1916,9 @@ RENDERERS.trends = function(){
     groupedBar('tr_oc_goal', O.goals.labels, gser, {xFontSize:10, colors:[GOLD,TEAL,TEAL_MID,'#7AB8B5','#A8D0CE','#D9906F',NEG,'#132625']});
     labeledBar('tr_oc_unsat', O.labels, O.unsat, {max:22, yFontSize:12, colors:O.unsat.map(v=>v>=12?NEG:v>=10?'#D9906F':TEAL_MID)});
     labeledBar('tr_oc_dig', O.labels, O.dig_ready, {max:90, yFontSize:12, colors:O.dig_ready.map(v=>v>=65?GOLD:v>=55?TEAL:TEAL_MID)});
+    const occColors = [GOLD,TEAL,TEAL_MID,'#7AB8B5','#A8D0CE','#D9906F',NEG,'#132625','#5B8A88'];
+    groupedBar('tr_oc_expand', DATA.expand_factors.labels, DATA.expand_factors.occupation, {xFontSize:9, colors:occColors});
+    groupedBar('tr_oc_advuse', DATA.advisory_use.labels, DATA.advisory_use.occupation, {xFontSize:9, colors:occColors});
   }
 
   el.querySelectorAll('.seg-toggle .seg-btn').forEach(btn=>{
@@ -1939,6 +2145,7 @@ function chartDataToCsv(canvasId){
 
 function attachDownloadButtons(root){
   const scope = root || document;
+  setTimeout(function(){ if(window.__applyChartWatermarks) window.__applyChartWatermarks(); }, 40);
   scope.querySelectorAll('.card').forEach(card=>{
     if(card.querySelector('.card-dl')) return;
     const canvas = card.querySelector('canvas');
@@ -1946,61 +2153,67 @@ function attachDownloadButtons(root){
     const id = canvas.id;
     const title = (card.querySelector('h3')||{}).textContent || id;
     const safe = title.replace(/[^\w\u00C0-\u024F\u1E00-\u1EFF\- ]+/g,'').trim().slice(0,40) || id;
-    const chart = (typeof Chart !== 'undefined' && Chart.getChart) ? Chart.getChart(canvas) : null;
+    const box = canvas.closest('.chart-box') || canvas.parentElement;
+
+    function getChart(){
+      return (typeof Chart !== 'undefined' && Chart.getChart) ? Chart.getChart(canvas) : null;
+    }
 
     let legSize = CHART_STYLE_DEFAULTS.legend;
     let labSize = CHART_STYLE_DEFAULTS.label;
     let axSize  = CHART_STYLE_DEFAULTS.axis;
-
-    if(chart){
-      const legOpt = chart.options && chart.options.plugins && chart.options.plugins.legend;
-      if(legOpt && legOpt.labels && legOpt.labels.font && legOpt.labels.font.size){
-        legSize = legOpt.labels.font.size;
-      }
-      if(chart.$legendFontSize != null) legSize = chart.$legendFontSize;
-      if(chart.$dlFontSize != null) labSize = chart.$dlFontSize;
-      else if(chart.config && chart.config.type === 'doughnut') labSize = 11;
-      else if((chart.data.datasets||[]).length > 2) labSize = 8.5;
-      if(chart.$axisFontSize != null) axSize = chart.$axisFontSize;
-      else {
-        try{
-          const sc = chart.options && chart.options.scales;
-          if(sc){
-            const first = sc.x || sc.y || Object.values(sc)[0];
-            if(first && first.ticks && first.ticks.font && first.ticks.font.size){
-              axSize = first.ticks.font.size;
-            }
-          }
-        }catch(_){}
-      }
+    const chart0 = getChart();
+    if(chart0){
+      if(chart0.$legendFontSize != null) legSize = chart0.$legendFontSize;
+      if(chart0.$dlFontSize != null) labSize = chart0.$dlFontSize;
+      else if(chart0.config && chart0.config.type === 'doughnut') labSize = 11;
+      else if((chart0.data.datasets||[]).length > 2) labSize = 8.5;
+      if(chart0.$axisFontSize != null) axSize = chart0.$axisFontSize;
     }
+
+    function readBoxSize(){
+      const h = box ? (parseInt(box.style.height,10) || box.clientHeight || 320) : 320;
+      const w = box ? (parseInt(box.style.width,10) || 0) : 0;
+      return {h, w};
+    }
+    let {h: boxH, w: boxW} = readBoxSize();
+    const origBoxH = boxH;
+    const origBoxW = boxW || null;
 
     const bar = document.createElement('div');
     bar.className = 'card-dl';
     bar.innerHTML = `
       <button type="button" class="dl-ico" title="Tải ảnh PNG" data-dl="png">📷</button>
       <button type="button" class="dl-ico gold" title="Tải dữ liệu CSV (Excel)" data-dl="csv">📊</button>
-      <button type="button" class="dl-ico" title="Tùy chỉnh cỡ chữ" data-dl="style">Aa</button>
+      <button type="button" class="dl-ico" title="Tùy chỉnh biểu đồ" data-dl="style">Aa</button>
       <div class="card-style" data-st-panel>
         <div class="st-head">Cỡ chữ</div>
-        <div class="st-row">
-          <span class="lbl">Legend</span>
+        <div class="st-row"><span class="lbl">Legend</span>
           <button type="button" class="st-btn" data-st="leg-minus">−</button>
           <span class="st-val" data-st="leg-val">${legSize}</span>
-          <button type="button" class="st-btn" data-st="leg-plus">+</button>
-        </div>
-        <div class="st-row">
-          <span class="lbl">Nhãn DL</span>
+          <button type="button" class="st-btn" data-st="leg-plus">+</button></div>
+        <div class="st-row"><span class="lbl">Nhãn DL</span>
           <button type="button" class="st-btn" data-st="lab-minus">−</button>
           <span class="st-val" data-st="lab-val">${labSize}</span>
-          <button type="button" class="st-btn" data-st="lab-plus">+</button>
-        </div>
-        <div class="st-row">
-          <span class="lbl">Trục</span>
+          <button type="button" class="st-btn" data-st="lab-plus">+</button></div>
+        <div class="st-row"><span class="lbl">Trục</span>
           <button type="button" class="st-btn" data-st="ax-minus">−</button>
           <span class="st-val" data-st="ax-val">${axSize}</span>
-          <button type="button" class="st-btn" data-st="ax-plus">+</button>
+          <button type="button" class="st-btn" data-st="ax-plus">+</button></div>
+        <div class="st-sep">Kích thước</div>
+        <div class="st-row"><span class="lbl">Cao (px)</span>
+          <button type="button" class="st-btn" data-st="h-minus">−</button>
+          <span class="st-val" data-st="h-val">${boxH}</span>
+          <button type="button" class="st-btn" data-st="h-plus">+</button></div>
+        <div class="st-row"><span class="lbl">Rộng (px)</span>
+          <button type="button" class="st-btn" data-st="w-minus">−</button>
+          <span class="st-val" data-st="w-val">${boxW || 'auto'}</span>
+          <button type="button" class="st-btn" data-st="w-plus">+</button></div>
+        <div class="st-row" style="margin-top:4px;">
+          <button type="button" class="st-btn" data-st="size-reset" style="width:auto;padding:0 8px;font-size:11px;">↺ Reset</button>
+          <button type="button" class="st-btn" data-st="w-full" style="width:auto;padding:0 8px;font-size:11px;">↔ Full</button>
         </div>
+        <div data-st="filter-area"></div>
       </div>`;
 
     bar.querySelector('[data-dl="png"]').onclick = (e)=>{ e.stopPropagation(); downloadChartPng(id, safe); };
@@ -2008,43 +2221,372 @@ function attachDownloadButtons(root){
 
     const styleBtn = bar.querySelector('[data-dl="style"]');
     const panel = bar.querySelector('[data-st-panel]');
+    const filterArea = bar.querySelector('[data-st="filter-area"]');
+
+    function ensureOrig(ch){
+      if(!ch || ch.$origSnap) return;
+      ch.$origSnap = {
+        labels: (ch.data.labels || []).slice(),
+        datasets: (ch.data.datasets || []).map(ds => ({
+          data: (ds.data || []).slice(),
+          hidden: !!ds.hidden,
+          backgroundColor: Array.isArray(ds.backgroundColor) ? ds.backgroundColor.slice() : ds.backgroundColor,
+          borderColor: Array.isArray(ds.borderColor) ? ds.borderColor.slice() : ds.borderColor,
+          label: ds.label
+        }))
+      };
+    }
+
+    function applyFilters(ch){
+      if(!ch || !ch.$origSnap) return;
+      const snap = ch.$origSnap;
+      const catFilter = ch.$filterCats; // Set of indices or null = all
+      const labels = snap.labels;
+      const keepIdx = [];
+      labels.forEach((_, i)=>{
+        if(!catFilter || catFilter.has(i)) keepIdx.push(i);
+      });
+      ch.data.labels = keepIdx.map(i => labels[i]);
+      ch.data.datasets.forEach((ds, di)=>{
+        const od = snap.datasets[di];
+        if(!od) return;
+        ds.data = keepIdx.map(i => od.data[i]);
+        if(Array.isArray(od.backgroundColor)) ds.backgroundColor = keepIdx.map(i => od.backgroundColor[i]);
+        if(Array.isArray(od.borderColor)) ds.borderColor = keepIdx.map(i => od.borderColor[i]);
+        if(ch.$hiddenDs && ch.$hiddenDs.has(di)) ds.hidden = true;
+        else ds.hidden = !!od.hidden;
+      });
+      ch.update();
+    }
+
+    function rebuildFilterPanel(){
+      filterArea.innerHTML = '';
+      const ch = getChart();
+      if(!ch) return;
+      ensureOrig(ch);
+      const labels = ch.$origSnap.labels || [];
+      const datasets = ch.$origSnap.datasets || [];
+
+      // --- Màu từng hạng mục (nội dung con) trong series ---
+      (function buildColors(){
+        const PRESETS = ['#006B68','#FFC62F','#0A8F8A','#D9906F','#132625','#7AB8B5','#E8A317','#4A9B96','#C45C4A','#5B8A88'];
+        const sep = document.createElement('div');
+        sep.className = 'st-sep';
+        sep.textContent = 'Màu từng hạng mục';
+        filterArea.appendChild(sep);
+
+        const labels = (ch.$origSnap && ch.$origSnap.labels) ? ch.$origSnap.labels : (ch.data.labels || []);
+        const datasets = ch.data.datasets || [];
+        if(!datasets.length || !labels.length){
+          const p = document.createElement('div');
+          p.style.cssText = 'font-size:11px;color:#8a9a98;';
+          p.textContent = 'Không có hạng mục để chỉnh màu';
+          filterArea.appendChild(p);
+          return;
+        }
+
+        // Lưu màu gốc (mảng theo label) lần đầu
+        if(!ch.$colorOrig){
+          ch.$colorOrig = datasets.map(ds=>{
+            const bg = ds.backgroundColor;
+            if(Array.isArray(bg)) return bg.slice();
+            // single color → expand to all labels (full orig length)
+            const n = (ch.$origSnap && ch.$origSnap.labels) ? ch.$origSnap.labels.length : labels.length;
+            return Array.from({length:n}, ()=> bg || '#006B68');
+          });
+        }
+
+        function ensureArrayColors(ds, di){
+          const fullN = (ch.$origSnap && ch.$origSnap.labels) ? ch.$origSnap.labels.length : (ds.data||[]).length;
+          let bg = ds.backgroundColor;
+          if(!Array.isArray(bg)){
+            bg = Array.from({length: fullN}, ()=> bg || '#006B68');
+            ds.backgroundColor = bg;
+          } else if(bg.length < fullN){
+            const fill = bg[0] || '#006B68';
+            while(bg.length < fullN) bg.push(fill);
+            ds.backgroundColor = bg;
+          }
+          if(ch.$origSnap && ch.$origSnap.datasets[di]){
+            let ob = ch.$origSnap.datasets[di].backgroundColor;
+            if(!Array.isArray(ob)){
+              ob = Array.from({length: fullN}, ()=> ob || '#006B68');
+              ch.$origSnap.datasets[di].backgroundColor = ob;
+            } else if(ob.length < fullN){
+              const fill = ob[0] || '#006B68';
+              while(ob.length < fullN) ob.push(fill);
+            }
+          }
+          return ds.backgroundColor;
+        }
+
+        /** index trên chart hiện tại → index gốc (sau filter) */
+        function mapVisibleToOrig(){
+          const origLabels = (ch.$origSnap && ch.$origSnap.labels) || ch.data.labels || [];
+          const catFilter = ch.$filterCats; // Set or null
+          const map = [];
+          origLabels.forEach((_, i)=>{
+            if(!catFilter || catFilter.has(i)) map.push(i);
+          });
+          return map;
+        }
+
+        function setItemColor(di, visibleIdx, color){
+          const ds = datasets[di];
+          if(!ds) return;
+          ensureArrayColors(ds, di);
+          const map = mapVisibleToOrig();
+          const origIdx = map[visibleIdx] != null ? map[visibleIdx] : visibleIdx;
+
+          // Cập nhật snapshot gốc
+          if(ch.$origSnap && ch.$origSnap.datasets[di]){
+            ensureArrayColors(ch.$origSnap.datasets[di], di);
+            const ob = ch.$origSnap.datasets[di].backgroundColor;
+            if(Array.isArray(ob) && origIdx < ob.length) ob[origIdx] = color;
+          }
+          // Cập nhật data đang hiển thị
+          if(Array.isArray(ds.backgroundColor) && visibleIdx < ds.backgroundColor.length){
+            ds.backgroundColor[visibleIdx] = color;
+          }
+          if(Array.isArray(ds.borderColor)){
+            ds.borderColor[visibleIdx] = color;
+          } else if(ds.borderColor){
+            // convert to array matching data length
+            ds.borderColor = (ds.data||[]).map((_,i)=> i===visibleIdx ? color : (ds.backgroundColor[i]||ds.borderColor));
+          }
+          ch.update('none');
+        }
+
+        function setAllItemsInSeries(di, color){
+          const ds = datasets[di];
+          if(!ds) return;
+          ensureArrayColors(ds, di);
+          const nVis = (ds.data||[]).length;
+          for(let i=0;i<nVis;i++) setItemColor(di, i, color);
+        }
+
+        // UI: mỗi series → danh sách hạng mục
+        datasets.forEach((ds, di)=>{
+          const head = document.createElement('div');
+          head.style.cssText = 'font-size:11px;font-weight:700;color:#006B68;margin:8px 0 4px;display:flex;align-items:center;gap:6px;';
+          const title = document.createElement('span');
+          title.style.cssText = 'flex:1;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;';
+          title.textContent = ds.label || ('Series ' + (di+1));
+          head.appendChild(title);
+
+          // tô cả series một màu
+          const allBtn = document.createElement('input');
+          allBtn.type = 'color';
+          allBtn.title = 'Tô cả series';
+          allBtn.style.cssText = 'width:22px;height:18px;padding:0;border:1px solid #d5e3e1;border-radius:3px;cursor:pointer;';
+          try{
+            const bg = ds.backgroundColor;
+            const c0 = Array.isArray(bg) ? bg[0] : bg;
+            allBtn.value = (typeof c0==='string' && /^#[0-9A-Fa-f]{6}/.test(c0)) ? c0.slice(0,7) : '#006B68';
+          }catch(_){ allBtn.value = '#006B68'; }
+          allBtn.oninput = ()=> setAllItemsInSeries(di, allBtn.value);
+          head.appendChild(allBtn);
+          filterArea.appendChild(head);
+
+          const list = document.createElement('div');
+          list.className = 'st-filter-list';
+          list.style.maxHeight = datasets.length > 1 ? '120px' : '180px';
+
+          const visLabels = ch.data.labels || [];
+          visLabels.forEach((lab, vi)=>{
+            const row = document.createElement('div');
+            row.className = 'st-color-row';
+            row.style.margin = '2px 0';
+            const labEl = document.createElement('span');
+            labEl.style.cssText = 'flex:1;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;font-size:10.5px;max-width:100px;';
+            labEl.textContent = String(lab);
+            labEl.title = String(lab);
+
+            let cur = '#006B68';
+            try{
+              const bg = ds.backgroundColor;
+              cur = Array.isArray(bg) ? (bg[vi] || bg[0]) : bg;
+              if(typeof cur !== 'string' || !cur.startsWith('#')) cur = '#006B68';
+              cur = cur.slice(0,7);
+            }catch(_){}
+
+            const presets = document.createElement('div');
+            presets.style.cssText = 'display:flex;gap:2px;';
+            PRESETS.slice(0,5).forEach(col=>{
+              const b = document.createElement('button');
+              b.type = 'button';
+              b.className = 'st-swatch';
+              b.style.cssText = 'width:14px;height:14px;background:'+col+';border-radius:3px;';
+              b.title = col;
+              b.onclick = (e)=>{ e.stopPropagation(); inp.value = col; setItemColor(di, vi, col); };
+              presets.appendChild(b);
+            });
+
+            const inp = document.createElement('input');
+            inp.type = 'color';
+            inp.value = /^#[0-9A-Fa-f]{6}$/.test(cur) ? cur : '#006B68';
+            inp.style.cssText = 'width:22px;height:18px;padding:0;border:1px solid #d5e3e1;border-radius:3px;cursor:pointer;';
+            inp.oninput = ()=> setItemColor(di, vi, inp.value);
+
+            row.appendChild(labEl);
+            row.appendChild(presets);
+            row.appendChild(inp);
+            list.appendChild(row);
+          });
+          filterArea.appendChild(list);
+        });
+
+        const resetRow = document.createElement('div');
+        resetRow.className = 'st-quick';
+        resetRow.style.marginTop = '6px';
+        const rb = document.createElement('button');
+        rb.type = 'button';
+        rb.className = 'st-btn';
+        rb.textContent = '↺ Màu gốc hạng mục';
+        rb.onclick = ()=>{
+          if(!ch.$colorOrig) return;
+          ch.$colorOrig.forEach((bgArr, di)=>{
+            if(!ch.data.datasets[di]) return;
+            const copy = Array.isArray(bgArr) ? bgArr.slice() : bgArr;
+            if(ch.$origSnap && ch.$origSnap.datasets[di]){
+              ch.$origSnap.datasets[di].backgroundColor = Array.isArray(copy) ? copy.slice() : copy;
+            }
+            // Áp lại theo filter hiện tại
+            const map = mapVisibleToOrig();
+            if(Array.isArray(copy)){
+              ch.data.datasets[di].backgroundColor = map.map(oi => copy[oi] != null ? copy[oi] : copy[0]);
+            } else {
+              ch.data.datasets[di].backgroundColor = copy;
+            }
+          });
+          ch.update('none');
+          rebuildFilterPanel();
+        };
+        resetRow.appendChild(rb);
+        filterArea.appendChild(resetRow);
+      })();
+
+      // Dataset visibility (legend series)
+      if(datasets.length > 1){
+        const sep = document.createElement('div');
+        sep.className = 'st-sep';
+        sep.textContent = 'Chuỗi dữ liệu (Legend)';
+        filterArea.appendChild(sep);
+        const wrap = document.createElement('div');
+        wrap.className = 'st-filter-list';
+        datasets.forEach((ds, di)=>{
+          const row = document.createElement('label');
+          const cb = document.createElement('input');
+          cb.type = 'checkbox';
+          cb.checked = !(ch.$hiddenDs && ch.$hiddenDs.has(di));
+          cb.onchange = ()=>{
+            if(!ch.$hiddenDs) ch.$hiddenDs = new Set();
+            if(cb.checked) ch.$hiddenDs.delete(di); else ch.$hiddenDs.add(di);
+            // at least one visible
+            if(ch.$hiddenDs.size >= datasets.length){ cb.checked = true; ch.$hiddenDs.delete(di); return; }
+            applyFilters(ch);
+          };
+          row.appendChild(cb);
+          row.appendChild(document.createTextNode(ds.label || ('Series '+(di+1))));
+          wrap.appendChild(row);
+        });
+        filterArea.appendChild(wrap);
+      }
+
+      // Axis categories
+      if(labels.length > 1 && labels.length <= 40){
+        const sep = document.createElement('div');
+        sep.className = 'st-sep';
+        sep.textContent = 'Mục trục (bật/tắt)';
+        filterArea.appendChild(sep);
+        const wrap = document.createElement('div');
+        wrap.className = 'st-filter-list';
+        labels.forEach((lab, i)=>{
+          const row = document.createElement('label');
+          const cb = document.createElement('input');
+          cb.type = 'checkbox';
+          cb.checked = !ch.$filterCats || ch.$filterCats.has(i);
+          cb.dataset.ci = String(i);
+          cb.onchange = ()=>{
+            const set = new Set();
+            wrap.querySelectorAll('input').forEach(x=>{ if(x.checked) set.add(+x.dataset.ci); });
+            if(set.size === 0){ cb.checked = true; return; }
+            ch.$filterCats = set.size === labels.length ? null : set;
+            applyFilters(ch);
+          };
+          row.appendChild(cb);
+          row.appendChild(document.createTextNode(String(lab)));
+          wrap.appendChild(row);
+        });
+        filterArea.appendChild(wrap);
+        const quick = document.createElement('div');
+        quick.className = 'st-quick';
+        quick.innerHTML = '<button type="button" class="st-btn" data-q="all">Tất cả</button><button type="button" class="st-btn" data-q="top5">Top 5</button><button type="button" class="st-btn" data-q="top8">Top 8</button>';
+        quick.querySelector('[data-q="all"]').onclick = ()=>{
+          wrap.querySelectorAll('input').forEach(x=>{ x.checked = true; });
+          ch.$filterCats = null; applyFilters(ch);
+        };
+        function topN(n){
+          // rank by first dataset values from orig
+          const vals = (ch.$origSnap.datasets[0] && ch.$origSnap.datasets[0].data) || [];
+          const ranked = labels.map((lab,i)=>({i, v: +vals[i]||0})).sort((a,b)=>b.v-a.v);
+          const set = new Set(ranked.slice(0, Math.min(n, ranked.length)).map(x=>x.i));
+          wrap.querySelectorAll('input').forEach(x=>{ x.checked = set.has(+x.dataset.ci); });
+          ch.$filterCats = set.size === labels.length ? null : set;
+          applyFilters(ch);
+        }
+        quick.querySelector('[data-q="top5"]').onclick = ()=> topN(5);
+        quick.querySelector('[data-q="top8"]').onclick = ()=> topN(8);
+        filterArea.appendChild(quick);
+      }
+    }
+
     styleBtn.onclick = (e)=>{
       e.stopPropagation();
       const open = panel.classList.toggle('open');
       styleBtn.classList.toggle('active', open);
-      // đóng panel khác
       document.querySelectorAll('.card-style.open').forEach(p=>{
         if(p !== panel){ p.classList.remove('open'); const b=p.parentElement && p.parentElement.querySelector('[data-dl="style"]'); if(b) b.classList.remove('active'); }
       });
+      if(open) rebuildFilterPanel();
     };
     panel.onclick = (e)=> e.stopPropagation();
 
     function clamp(v, min, max){ return Math.max(min, Math.min(max, v)); }
     function refreshVals(){
-      const c = Chart.getChart(canvas);
-      if(!c) return;
-      bar.querySelector('[data-st="leg-val"]').textContent = c.$legendFontSize != null ? c.$legendFontSize : legSize;
-      bar.querySelector('[data-st="lab-val"]').textContent = c.$dlFontSize != null ? c.$dlFontSize : labSize;
-      bar.querySelector('[data-st="ax-val"]').textContent  = c.$axisFontSize != null ? c.$axisFontSize : axSize;
+      const ch = getChart();
+      bar.querySelector('[data-st="leg-val"]').textContent = (ch && ch.$legendFontSize != null) ? ch.$legendFontSize : legSize;
+      bar.querySelector('[data-st="lab-val"]').textContent = (ch && ch.$dlFontSize != null) ? ch.$dlFontSize : labSize;
+      bar.querySelector('[data-st="ax-val"]').textContent  = (ch && ch.$axisFontSize != null) ? ch.$axisFontSize : axSize;
+      bar.querySelector('[data-st="h-val"]').textContent = boxH;
+      bar.querySelector('[data-st="w-val"]').textContent = boxW || 'auto';
     }
     function bump(kind, delta){
-      const c = Chart.getChart(canvas);
-      if(!c){ alert('Biểu đồ chưa sẵn sàng. Hãy đợi tải xong hoặc mở lại tab.'); return; }
+      const ch = getChart();
+      if(!ch && (kind==='leg'||kind==='lab'||kind==='ax')){
+        alert('Biểu đồ chưa sẵn sàng. Hãy đợi tải xong hoặc mở lại tab.'); return;
+      }
       if(kind === 'leg'){
-        const cur = c.$legendFontSize != null ? c.$legendFontSize : legSize;
-        const next = clamp(Math.round((+cur + delta) * 2) / 2, 8, 20);
-        applyChartTextStyle(c, {legendSize: next});
-        legSize = next;
+        const cur = ch.$legendFontSize != null ? ch.$legendFontSize : legSize;
+        const next = clamp(Math.round((+cur + delta)*2)/2, 8, 22);
+        applyChartTextStyle(ch, {legendSize: next}); legSize = next;
       } else if(kind === 'lab'){
-        const cur = c.$dlFontSize != null ? c.$dlFontSize : labSize;
-        const next = clamp(Math.round((+cur + delta) * 2) / 2, 7, 22);
-        applyChartTextStyle(c, {labelSize: next});
-        labSize = next;
-      } else {
-        const cur = c.$axisFontSize != null ? c.$axisFontSize : axSize;
-        const next = clamp(Math.round((+cur + delta) * 2) / 2, 7, 20);
-        applyChartTextStyle(c, {axisSize: next});
-        axSize = next;
+        const cur = ch.$dlFontSize != null ? ch.$dlFontSize : labSize;
+        const next = clamp(Math.round((+cur + delta)*2)/2, 7, 24);
+        applyChartTextStyle(ch, {labelSize: next}); labSize = next;
+      } else if(kind === 'ax'){
+        const cur = ch.$axisFontSize != null ? ch.$axisFontSize : axSize;
+        const next = clamp(Math.round((+cur + delta)*2)/2, 7, 22);
+        applyChartTextStyle(ch, {axisSize: next}); axSize = next;
+      } else if(kind === 'h'){
+        boxH = clamp(boxH + delta, 180, 900);
+        if(box){ box.style.height = boxH + 'px'; }
+        const ch2 = getChart(); if(ch2){ try{ ch2.resize(); }catch(_){ } }
+      } else if(kind === 'w'){
+        if(!boxW) boxW = (box && box.clientWidth) || 480;
+        boxW = clamp(boxW + delta, 240, 1400);
+        if(box){ box.style.width = boxW + 'px'; box.style.maxWidth = '100%'; }
+        const ch2 = getChart(); if(ch2){ try{ ch2.resize(); }catch(_){ } }
       }
       refreshVals();
     }
@@ -2054,6 +2596,26 @@ function attachDownloadButtons(root){
     bar.querySelector('[data-st="lab-plus"]').onclick  = ()=> bump('lab', +0.5);
     bar.querySelector('[data-st="ax-minus"]').onclick  = ()=> bump('ax', -0.5);
     bar.querySelector('[data-st="ax-plus"]').onclick   = ()=> bump('ax', +0.5);
+    bar.querySelector('[data-st="h-minus"]').onclick   = ()=> bump('h', -40);
+    bar.querySelector('[data-st="h-plus"]').onclick    = ()=> bump('h', +40);
+    bar.querySelector('[data-st="w-minus"]').onclick   = ()=> bump('w', -40);
+    bar.querySelector('[data-st="w-plus"]').onclick    = ()=> bump('w', +40);
+    bar.querySelector('[data-st="size-reset"]').onclick = ()=>{
+      boxH = origBoxH;
+      boxW = origBoxW;
+      if(box){
+        box.style.height = origBoxH + 'px';
+        box.style.width = origBoxW ? (origBoxW + 'px') : '';
+      }
+      const ch = getChart(); if(ch){ try{ ch.resize(); }catch(_){ } }
+      refreshVals();
+    };
+    bar.querySelector('[data-st="w-full"]').onclick = ()=>{
+      if(box){ box.style.width = '100%'; boxW = box.clientWidth; }
+      const ch = getChart(); if(ch){ try{ ch.resize(); }catch(_){ } }
+      refreshVals();
+    };
+
     card.appendChild(bar);
   });
 }
@@ -2123,7 +2685,272 @@ document.addEventListener('click', function(e){
   }, 120);
 }, true);
 
-// ============ PASSWORD GATE ============
+
+// ============ PDF EXPORT ============
+const PDF_TAB_TITLES = {
+  overview: 'Tổng quan',
+  demo: 'Nhân khẩu học',
+  products: 'Sản phẩm & Kênh',
+  satisfaction: 'Hài lòng & Chấp nhận số',
+  segments: 'Phân khúc khách hàng',
+  trends: 'Xu hướng & Ý kiến KH'
+};
+
+function waitFrames(n){
+  return new Promise(resolve=>{
+    let i = 0;
+    function tick(){ if(++i >= n) resolve(); else requestAnimationFrame(tick); }
+    requestAnimationFrame(tick);
+  });
+}
+
+async function switchTabForPdf(id){
+  // Activate tab without relying only on click
+  document.querySelectorAll('.tab-btn').forEach(b=> b.classList.toggle('active', b.dataset.tab===id));
+  document.querySelectorAll('section.panel').forEach(p=> p.classList.toggle('active', p.id==='panel-'+id));
+  if(!initedTabs.has(id)){
+    initedTabs.add(id);
+    if(RENDERERS[id]) RENDERERS[id]();
+  }
+  setTimeout(()=> attachDownloadButtons(document.getElementById('panel-'+id)), 30);
+  await waitFrames(8);
+  // Resize charts in panel
+  const panel = document.getElementById('panel-'+id);
+  if(panel){
+    panel.querySelectorAll('canvas').forEach(cv=>{
+      try{ const ch = Chart.getChart(cv); if(ch){ ch.resize(); ch.update('none'); } }catch(e){}
+    });
+  }
+  await waitFrames(4);
+}
+
+async function exportDashboardToPdf(scope){
+  if(typeof html2canvas === 'undefined' || typeof window.jspdf === 'undefined'){
+    alert('Thư viện xuất PDF chưa tải xong. Kiểm tra kết nối mạng (CDN) và thử lại.');
+    return;
+  }
+  const { jsPDF } = window.jspdf;
+  const overlay = document.getElementById('pdfExportOverlay');
+  const bar = document.getElementById('pdfExportBar');
+  const msg = document.getElementById('pdfExportMsg');
+  const titleEl = document.getElementById('pdfExportTitle');
+  function progress(pct, text){
+    if(bar) bar.style.width = Math.min(100, pct) + '%';
+    if(msg) msg.textContent = text || '';
+  }
+  if(overlay) overlay.classList.add('show');
+  document.body.classList.add('pdf-exporting');
+  progress(2, 'Chuẩn bị…');
+
+  const allIds = TABS.map(t=>t.id);
+  const tabIds = (scope === 'all') ? allIds : [scope];
+  const original = (document.querySelector('.tab-btn.active') || {}).dataset
+    ? document.querySelector('.tab-btn.active').dataset.tab
+    : 'overview';
+
+  const pdf = new jsPDF({ orientation: 'landscape', unit: 'mm', format: 'a4' });
+  const pageW = pdf.internal.pageSize.getWidth();
+  const pageH = pdf.internal.pageSize.getHeight();
+  const margin = 10;
+  const usableW = pageW - margin * 2;
+  const usableH = pageH - margin * 2 - 6;
+  let pageNum = 1;
+  let cursorY = margin;
+  let pageHasContent = false;
+  const gap = 4;
+  const MAX_CHARTS = 4;
+
+  function newPage(){
+    if(pageHasContent){ pdf.addPage(); pageNum++; }
+    pageHasContent = false;
+    cursorY = margin;
+  }
+  function footer(){
+    pdf.setFontSize(7); pdf.setTextColor(120);
+    pdf.text('BIDV · Dashboard khảo sát tiêu dùng tài chính · Trang ' + pageNum, pageW - margin, pageH - 4, {align:'right'});
+  }
+  function placeImg(data, wpx, hpx){
+    let wMM = usableW;
+    let hMM = (hpx / wpx) * wMM;
+    if(hMM > usableH){ const s = usableH / hMM; hMM = usableH; wMM *= s; }
+    if(pageHasContent && cursorY + hMM > pageH - margin){ footer(); newPage(true); pageHasContent=false; cursorY=margin; }
+    // force new page flag
+    if(pageHasContent && cursorY + hMM > pageH - margin){
+      footer(); pdf.addPage(); pageNum++; cursorY = margin; pageHasContent = false;
+    }
+    const x = margin + (usableW - wMM) / 2;
+    pdf.addImage(data, 'JPEG', x, cursorY, wMM, hMM);
+    cursorY += hMM + gap;
+    pageHasContent = true;
+  }
+
+  try{
+    for(let ti = 0; ti < tabIds.length; ti++){
+      const tabId = tabIds[ti];
+      const label = PDF_TAB_TITLES[tabId] || tabId;
+      progress(5 + (ti / tabIds.length) * 90, 'Tab ' + (ti+1) + '/' + tabIds.length + ': ' + label);
+      await switchTabForPdf(tabId);
+
+      if(pageHasContent){ footer(); pdf.addPage(); pageNum++; cursorY = margin; pageHasContent = false; }
+
+      // Title banner
+      pdf.setFillColor(0, 107, 104);
+      pdf.roundedRect(margin, cursorY, usableW, 9, 1.5, 1.5, 'F');
+      pdf.setTextColor(255); pdf.setFontSize(12);
+      pdf.text('Khảo sát tiêu dùng TC – ' + label, margin + 3, cursorY + 6.2);
+      cursorY += 12; pageHasContent = true;
+
+      const panel = document.getElementById('panel-' + tabId);
+      if(!panel) continue;
+
+      // Capture KPI only on overview first page of full export or overview tab
+      if(tabId === 'overview'){
+        const kpi = document.getElementById('kpiStrip');
+        if(kpi){
+          try{
+            const cv = await html2canvas(kpi, {scale: 1.5, backgroundColor: '#ffffff', logging: false});
+            placeImg(cv.toDataURL('image/jpeg', 0.92), cv.width, cv.height);
+          }catch(e){ console.warn(e); }
+        }
+      }
+
+      const cards = Array.from(panel.querySelectorAll('.card')).filter(card => card.querySelector('canvas'));
+      // Also capture insight blocks as text images optionally - skip for size
+      for(let ci = 0; ci < cards.length; ci++){
+        progress(5 + ((ti + (ci+1)/Math.max(cards.length,1)) / tabIds.length) * 90,
+          label + ' · biểu đồ ' + (ci+1) + '/' + cards.length);
+        const card = cards[ci];
+        try{
+          const cv = await html2canvas(card, {scale: 1.6, backgroundColor: '#ffffff', logging: false, useCORS: true});
+          placeImg(cv.toDataURL('image/jpeg', 0.92), cv.width, cv.height);
+        }catch(e){ console.warn('capture card', e); }
+      }
+    }
+    if(pageHasContent) footer();
+    await switchTabForPdf(original);
+    progress(100, 'Tải file…');
+    const today = new Date();
+    const ymd = today.getFullYear() + String(today.getMonth()+1).padStart(2,'0') + String(today.getDate()).padStart(2,'0');
+    const scopeLabel = scope === 'all' ? 'TatCa' : (PDF_TAB_TITLES[scope] || scope);
+    const safe = scopeLabel.normalize('NFD').replace(/[\u0300-\u036f]/g,'').replace(/đ/g,'d').replace(/Đ/g,'D').replace(/[^\w]+/g,'_');
+    pdf.save('Dashboard_KhaoSat_TC_' + safe + '_' + ymd + '.pdf');
+  }catch(err){
+    console.error(err);
+    alert('Xuất PDF thất bại: ' + (err && err.message ? err.message : err));
+    try{ await switchTabForPdf(original); }catch(e){}
+  }finally{
+    document.body.classList.remove('pdf-exporting');
+    setTimeout(()=>{ if(overlay) overlay.classList.remove('show'); }, 350);
+  }
+}
+
+
+
+// ============ WATERMARK chỉ trên biểu đồ ============
+(function(){
+  const KEY = 'bidv_chart_wm_on';
+  let on = true;
+  try{ if(localStorage.getItem(KEY)==='0') on = false; }catch(e){}
+
+  function tileWatermark(el){
+    if(!el) return;
+    el.innerHTML = '';
+    const text = 'Sản phẩm Viện NCKT';
+    for(let row=0; row<6; row++){
+      for(let col=0; col<5; col++){
+        const s = document.createElement('span');
+        s.textContent = text;
+        s.style.left = (col * 42 - 8 + (row%2)*12) + '%';
+        s.style.top = (row * 28 - 4) + '%';
+        el.appendChild(s);
+      }
+    }
+  }
+
+  /** Gắn/bật-tắt watermark cho MỌI biểu đồ (canvas + overlay) */
+  window.__applyChartWatermarks = function(){
+    // 1) Overlay DOM chỉ trong .chart-box (không phủ KPI/toolbar/toàn trang)
+    document.querySelectorAll('.chart-box').forEach(box=>{
+      if(getComputedStyle(box).position === 'static') box.style.position = 'relative';
+      let wm = box.querySelector(':scope > .chart-wm');
+      if(!wm){
+        wm = document.createElement('div');
+        wm.className = 'chart-wm';
+        wm.setAttribute('aria-hidden','true');
+        box.appendChild(wm);
+        tileWatermark(wm);
+      }
+    });
+    // Gỡ watermark nhầm chỗ (ngoài chart-box)
+    document.querySelectorAll('.chart-wm').forEach(wm=>{
+      if(!wm.closest('.chart-box')) wm.remove();
+    });
+    document.body.classList.toggle('wm-charts-on', !!on);
+
+    // 2) Vẽ lại tất cả Chart.js để plugin ẩn/hiện trên canvas
+    try{
+      if(typeof Chart !== 'undefined'){
+        document.querySelectorAll('canvas').forEach(function(cv){
+          try{
+            const ch = Chart.getChart(cv);
+            if(ch) ch.update('none');
+          }catch(e){}
+        });
+      }
+    }catch(e){}
+
+    const btn = document.getElementById('wmToggleBtn');
+    if(btn) btn.textContent = on ? '🔖 Ẩn watermark biểu đồ' : '🔖 Hiện watermark biểu đồ';
+  };
+
+  window.__toggleWatermark = function(){
+    on = !on;
+    try{ localStorage.setItem(KEY, on ? '1' : '0'); }catch(e){}
+    window.__applyChartWatermarks();
+  };
+
+  window.__wmIsOn = function(){ return !!on; };
+
+  // Plugin: watermark trên canvas biểu đồ (PNG cũng có khi đang bật)
+  const WM_PLUGIN = {
+    id: 'vienNcktWatermark',
+    afterDraw(chart){
+      if(!on) return;
+      const {ctx, chartArea} = chart;
+      if(!chartArea) return;
+      ctx.save();
+      ctx.globalAlpha = 0.16;
+      ctx.fillStyle = '#FFC62F';
+      ctx.font = '700 12px -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif';
+      ctx.textAlign = 'center';
+      ctx.textBaseline = 'middle';
+      const text = 'Sản phẩm Viện NCKT';
+      const stepX = 200, stepY = 88;
+      for(let y = chartArea.top - 10; y < chartArea.bottom + 30; y += stepY){
+        for(let x = chartArea.left - 30; x < chartArea.right + 50; x += stepX){
+          ctx.save();
+          ctx.translate(x + ((Math.floor(y/stepY)%2)*36), y);
+          ctx.rotate(-28 * Math.PI / 180);
+          ctx.fillText(text, 0, 0);
+          ctx.restore();
+        }
+      }
+      ctx.restore();
+    }
+  };
+  if(typeof Chart !== 'undefined'){
+    try{ Chart.register(WM_PLUGIN); }catch(e){}
+  }
+
+  document.addEventListener('click', function(e){
+    const t = e.target;
+    if(t && t.closest && (t.closest('.tab-btn') || t.closest('.seg-btn'))){
+      setTimeout(function(){ window.__applyChartWatermarks(); }, 180);
+    }
+  });
+})();
+
+// ============ PASSWORD GATE + INIT ============
 (function(){
   const PASS = '123456';
   const KEY = 'bidv_dash_auth_v1';
@@ -2131,35 +2958,75 @@ document.addEventListener('click', function(e){
   const form = document.getElementById('lock-form');
   const input = document.getElementById('lock-pw');
   const err = document.getElementById('lock-err');
+  let started = false;
+
+  function startDashboard(){
+    if(started) return;
+    started = true;
+    try{
+      renderKPIs();
+      renderTabButtons();
+      RENDERERS.overview();
+      initedTabs.add('overview');
+      setTimeout(function(){
+        attachDownloadButtons(document.getElementById('panel-overview'));
+        if(window.__applyChartWatermarks) window.__applyChartWatermarks();
+        // Resize charts sau khi hết visibility:hidden
+        if(typeof Chart !== 'undefined' && Chart.instances){
+          try{
+            Object.values(Chart.instances).forEach(function(ch){
+              try{ ch.resize(); ch.update('none'); }catch(e){}
+            });
+          }catch(e){}
+        }
+        document.querySelectorAll('canvas').forEach(function(cv){
+          try{ const ch = Chart.getChart(cv); if(ch){ ch.resize(); ch.update('none'); } }catch(e){}
+        });
+      }, 120);
+    }catch(e){
+      console.error('Init dashboard failed', e);
+      alert('Lỗi khởi tạo dashboard: ' + (e && e.message ? e.message : e));
+    }
+  }
+
   function unlock(){
     if(lock) lock.classList.add('hidden');
     document.body.classList.remove('locked');
     try{ sessionStorage.setItem(KEY,'1'); }catch(e){}
+    // Chờ 1 frame để browser bỏ visibility:hidden rồi mới vẽ chart
+    requestAnimationFrame(function(){
+      requestAnimationFrame(startDashboard);
+    });
   }
+
   try{
-    if(sessionStorage.getItem(KEY)==='1'){ unlock(); return; }
+    if(sessionStorage.getItem(KEY)==='1'){
+      unlock();
+      return;
+    }
   }catch(e){}
+
   if(form){
     form.addEventListener('submit', function(e){
       e.preventDefault();
       if((input.value||'') === PASS){
-        err.textContent = '';
+        if(err) err.textContent = '';
         unlock();
       } else {
-        err.textContent = 'Mật khẩu không đúng. Vui lòng thử lại.';
-        input.value = '';
-        input.focus();
+        if(err) err.textContent = 'Mật khẩu không đúng. Vui lòng thử lại.';
+        if(input){ input.value = ''; input.focus(); }
+      }
+    });
+  }
+  if(input){
+    input.addEventListener('keydown', function(e){
+      if(e.key === 'Enter'){
+        e.preventDefault();
+        if(form) form.dispatchEvent(new Event('submit', {cancelable:true, bubbles:true}));
       }
     });
   }
 })();
-
-// ============ INIT ============
-renderKPIs();
-renderTabButtons();
-RENDERERS.overview();
-initedTabs.add('overview');
-setTimeout(()=> attachDownloadButtons(document.getElementById('panel-overview')), 100);
 
 // Toolbar tải dữ liệu tổng (CSV mở bằng Excel)
 (function(){
@@ -2171,7 +3038,29 @@ setTimeout(()=> attachDownloadButtons(document.getElementById('panel-overview'))
   bar.innerHTML = `
     <button type="button" onclick="exportAllKpiCsv()">📊 Tải KPI (Excel/CSV)</button>
     <button type="button" class="gold-btn" onclick="exportDemographicsCsv()">📋 Tải Nhân khẩu học (Excel/CSV)</button>
-    <button type="button" onclick="document.querySelectorAll('.card canvas').forEach((cv,i)=>setTimeout(()=>downloadChartPng(cv.id, cv.id), i*200))">📷 Tải tất cả biểu đồ tab hiện tại (PNG)</button>`;
+    <button type="button" onclick="document.querySelectorAll('section.panel.active .card canvas').forEach((cv,i)=>setTimeout(()=>downloadChartPng(cv.id, (cv.closest('.card')&&cv.closest('.card').querySelector('h3')||{}).textContent||cv.id), i*250))">📷 Tải PNG tab hiện tại</button>
+    <button type="button" id="wmToggleBtn" onclick="window.__toggleWatermark && window.__toggleWatermark()">🔖 Ẩn watermark biểu đồ</button>
+    <div class="pdf-wrap">
+      <button type="button" id="pdfMenuBtn">📄 Xuất PDF ▾</button>
+      <div class="pdf-menu" id="pdfMenu">
+        <button type="button" data-pdf="all">Tất cả các tab</button>
+        <button type="button" data-pdf="overview">Tổng quan</button>
+        <button type="button" data-pdf="demo">Nhân khẩu học</button>
+        <button type="button" data-pdf="products">Sản phẩm & Kênh</button>
+        <button type="button" data-pdf="satisfaction">Hài lòng & Chấp nhận số</button>
+        <button type="button" data-pdf="segments">Phân khúc khách hàng</button>
+        <button type="button" data-pdf="trends">Xu hướng & Ý kiến KH</button>
+      </div>
+    </div>`;
+  const pdfBtn = bar.querySelector('#pdfMenuBtn');
+  const pdfMenu = bar.querySelector('#pdfMenu');
+  if(pdfBtn && pdfMenu){
+    pdfBtn.onclick = (e)=>{ e.stopPropagation(); pdfMenu.classList.toggle('open'); };
+    pdfMenu.querySelectorAll('[data-pdf]').forEach(b=>{
+      b.onclick = (e)=>{ e.stopPropagation(); pdfMenu.classList.remove('open'); exportDashboardToPdf(b.getAttribute('data-pdf')); };
+    });
+    document.addEventListener('click', ()=> pdfMenu.classList.remove('open'));
+  }
   const firstPanel = document.getElementById('panel-overview');
   if(firstPanel && firstPanel.parentNode){
     firstPanel.parentNode.insertBefore(bar, firstPanel);
