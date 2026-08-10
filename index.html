@@ -377,6 +377,37 @@ body:not(.locked) > #lock-screen.hidden{display:none !important;}
 .card-style .st-quick button{
   width:auto!important; padding:2px 7px!important; font-size:10px!important; height:auto!important;
 }
+.card-style input[type="color"].st-color{
+  width:28px; height:22px; padding:0; border:1px solid #d5e3e1; border-radius:4px;
+  cursor:pointer; background:#fff; flex-shrink:0;
+}
+.card-style select.st-font{
+  flex:1; min-width:0; font-size:10.5px; padding:3px 4px; border:1px solid #d5e3e1;
+  border-radius:5px; background:#f7faf9; color:#132625; max-width:140px;
+}
+.card-style .st-row.st-style-row{ flex-wrap:wrap; gap:4px 6px; }
+.card-style .st-row.st-style-row .lbl{ min-width:52px; }
+.card-style button.st-bi{
+  border:1px solid #d5e3e1; background:#f7faf9; color:#5B6B6A;
+  width:22px; height:22px; border-radius:5px; cursor:pointer;
+  font-size:12px; line-height:1; font-weight:700;
+  display:inline-flex; align-items:center; justify-content:center; padding:0;
+}
+.card-style button.st-bi:hover{ border-color:var(--teal); color:var(--teal); }
+.card-style button.st-bi.on{
+  background:var(--teal); color:#fff; border-color:var(--teal);
+}
+.card-style button.st-bi.st-i{ font-style:italic; font-weight:600; }
+.card-style input.st-title-input{
+  width:100%; box-sizing:border-box; font-size:11px; padding:5px 7px;
+  border:1px solid #d5e3e1; border-radius:6px; color:#132625;
+  background:#f7faf9; margin:2px 0 4px;
+}
+.card-style input.st-title-input:focus{
+  outline:none; border-color:var(--teal); background:#fff;
+  box-shadow:0 0 0 2px rgba(0,107,104,.12);
+}
+
 .pdf-overlay{
   display:none; position:fixed; inset:0; z-index:100000;
   background:rgba(0,0,0,.55); align-items:center; justify-content:center;
@@ -597,40 +628,153 @@ function _ensureFontObj(parent, key){
   if(!parent[key].font || typeof parent[key].font !== 'object') parent[key].font = {};
   return parent[key].font;
 }
-function applyChartTextStyle(chart, {legendSize, labelSize, axisSize}={}){
+const CHART_FONT_OPTIONS = [
+  {v: "-apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif", l: 'Hệ thống'},
+  {v: "Arial, Helvetica, sans-serif", l: 'Arial'},
+  {v: "'Times New Roman', Times, serif", l: 'Times'},
+  {v: "Georgia, serif", l: 'Georgia'},
+  {v: "'Courier New', Courier, monospace", l: 'Courier'},
+  {v: "Verdana, Geneva, sans-serif", l: 'Verdana'},
+  {v: "Tahoma, sans-serif", l: 'Tahoma'},
+  {v: "'Trebuchet MS', sans-serif", l: 'Trebuchet'},
+];
+const DEFAULT_DL_COLOR = '#132625';
+const DEFAULT_LEGEND_COLOR = '#5B6B6A';
+const DEFAULT_AXIS_COLOR = '#5B6B6A';
+const DEFAULT_FONT = "-apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif";
+
+function getChartLabelColor(chart){
+  return (chart && chart.$dlColor) || dataLabelColor || DEFAULT_DL_COLOR;
+}
+function getChartLabelFontFamily(chart){
+  return (chart && chart.$dlFontFamily) || DEFAULT_FONT;
+}
+function getChartLabelFontSpec(chart, weight, sizePx){
+  // Ưu tiên đậm/nghiêng do user chọn cho nhãn DL
+  let w = weight || '600';
+  if(chart && chart.$dlBold === true) w = '700';
+  else if(chart && chart.$dlBold === false) w = '400';
+  const style = (chart && chart.$dlItalic) ? 'italic ' : '';
+  const fs = sizePx != null ? sizePx : getChartLabelSize(chart, 10.5);
+  const fam = getChartLabelFontFamily(chart);
+  return style + w + ' ' + fs + 'px ' + fam;
+}
+function _fontWeightVal(bold, fallback){
+  if(bold === true) return 'bold';
+  if(bold === false) return 'normal';
+  return fallback || 'normal';
+}
+function _fontStyleVal(italic){
+  return italic ? 'italic' : 'normal';
+}
+function applyChartTextStyle(chart, opts={}){
   if(!chart) return;
-  if(labelSize != null){
-    chart.$dlFontSize = +labelSize;
+  const {
+    legendSize, labelSize, axisSize,
+    legendColor, labelColor, axisColor,
+    legendFont, labelFont, axisFont,
+    legendBold, labelBold, axisBold,
+    legendItalic, labelItalic, axisItalic
+  } = opts;
+
+  if(labelSize != null) chart.$dlFontSize = +labelSize;
+  if(labelColor != null) chart.$dlColor = labelColor;
+  if(labelFont != null) chart.$dlFontFamily = labelFont;
+  if(labelBold != null) chart.$dlBold = !!labelBold;
+  if(labelItalic != null) chart.$dlItalic = !!labelItalic;
+
+  if(legendSize != null) chart.$legendFontSize = +legendSize;
+  if(legendColor != null) chart.$legendColor = legendColor;
+  if(legendFont != null) chart.$legendFontFamily = legendFont;
+  if(legendBold != null) chart.$legendBold = !!legendBold;
+  if(legendItalic != null) chart.$legendItalic = !!legendItalic;
+
+  if(axisSize != null) chart.$axisFontSize = +axisSize;
+  if(axisColor != null) chart.$axisColor = axisColor;
+  if(axisFont != null) chart.$axisFontFamily = axisFont;
+  if(axisBold != null) chart.$axisBold = !!axisBold;
+  if(axisItalic != null) chart.$axisItalic = !!axisItalic;
+
+  const leg = chart.options && chart.options.plugins && chart.options.plugins.legend;
+  if(leg){
+    if(leg.labels == null) leg.labels = {};
+    if(leg.labels.font == null || typeof leg.labels.font !== 'object') leg.labels.font = {};
+    if(chart.$legendFontSize != null) leg.labels.font.size = +chart.$legendFontSize;
+    if(chart.$legendFontFamily) leg.labels.font.family = chart.$legendFontFamily;
+    if(chart.$legendBold != null) leg.labels.font.weight = _fontWeightVal(chart.$legendBold, 'normal');
+    if(chart.$legendItalic != null) leg.labels.font.style = _fontStyleVal(chart.$legendItalic);
+    if(chart.$legendColor) leg.labels.color = chart.$legendColor;
   }
-  if(legendSize != null){
-    chart.$legendFontSize = +legendSize;
-    const leg = chart.options && chart.options.plugins && chart.options.plugins.legend;
-    if(leg){
-      if(leg.labels == null) leg.labels = {};
-      if(leg.labels.font == null || typeof leg.labels.font !== 'object') leg.labels.font = {};
-      leg.labels.font.size = +legendSize;
-    }
-  }
-  if(axisSize != null){
-    chart.$axisFontSize = +axisSize;
-    const scales = chart.options && chart.options.scales;
-    if(scales){
-      Object.keys(scales).forEach(k=>{
-        const sc = scales[k];
-        if(!sc || typeof sc !== 'object') return;
-        // tick labels (nhãn trục)
-        if(sc.ticks == null) sc.ticks = {};
-        const tickFont = _ensureFontObj(sc, 'ticks');
-        tickFont.size = +axisSize;
-        // axis title if present / ensure size ready
-        if(sc.title == null) sc.title = { display: false, text: '' };
-        const titleFont = _ensureFontObj(sc, 'title');
-        titleFont.size = +axisSize + 1;
-      });
-    }
+
+  const scales = chart.options && chart.options.scales;
+  if(scales){
+    Object.keys(scales).forEach(k=>{
+      const sc = scales[k];
+      if(!sc || typeof sc !== 'object') return;
+      if(sc.ticks == null) sc.ticks = {};
+      const tickFont = _ensureFontObj(sc, 'ticks');
+      if(chart.$axisFontSize != null) tickFont.size = +chart.$axisFontSize;
+      if(chart.$axisFontFamily) tickFont.family = chart.$axisFontFamily;
+      if(chart.$axisBold != null) tickFont.weight = _fontWeightVal(chart.$axisBold, 'normal');
+      if(chart.$axisItalic != null) tickFont.style = _fontStyleVal(chart.$axisItalic);
+      if(chart.$axisColor) sc.ticks.color = chart.$axisColor;
+      if(sc.title == null) sc.title = { display: false, text: '' };
+      const titleFont = _ensureFontObj(sc, 'title');
+      if(chart.$axisFontSize != null) titleFont.size = +chart.$axisFontSize + 1;
+      if(chart.$axisFontFamily) titleFont.family = chart.$axisFontFamily;
+      if(chart.$axisBold != null) titleFont.weight = _fontWeightVal(chart.$axisBold, 'bold');
+      if(chart.$axisItalic != null) titleFont.style = _fontStyleVal(chart.$axisItalic);
+      if(chart.$axisColor) sc.title.color = chart.$axisColor;
+    });
   }
   try{ chart.update('none'); }catch(e){ try{ chart.update(); }catch(_){} }
 }
+
+/** Style tiêu đề card (h3) — font / màu / đậm / nghiêng / cỡ */
+const DEFAULT_TITLE_STYLE = {
+  size: 13.5,
+  color: '#132625',
+  font: DEFAULT_FONT,
+  bold: true,
+  italic: false,
+};
+function getCardTitleEl(cardOrCanvas){
+  const card = cardOrCanvas && cardOrCanvas.classList && cardOrCanvas.classList.contains('card')
+    ? cardOrCanvas
+    : (cardOrCanvas && cardOrCanvas.closest ? cardOrCanvas.closest('.card') : null);
+  return card ? card.querySelector('h3') : null;
+}
+function readTitleStyle(h3){
+  if(!h3) return Object.assign({}, DEFAULT_TITLE_STYLE);
+  const s = h3._titleStyle || {};
+  const cs = window.getComputedStyle ? getComputedStyle(h3) : null;
+  return {
+    size: s.size != null ? s.size : (parseFloat(cs && cs.fontSize) || DEFAULT_TITLE_STYLE.size),
+    color: s.color || (cs && cs.color) || DEFAULT_TITLE_STYLE.color,
+    font: s.font || DEFAULT_TITLE_STYLE.font,
+    bold: s.bold != null ? s.bold : true,
+    italic: s.italic != null ? s.italic : false,
+    text: (h3.textContent || '').trim(),
+  };
+}
+function applyCardTitleStyle(h3, opts={}){
+  if(!h3) return;
+  if(!h3._titleStyle) h3._titleStyle = Object.assign({}, DEFAULT_TITLE_STYLE);
+  const st = h3._titleStyle;
+  if(opts.size != null) st.size = +opts.size;
+  if(opts.color != null) st.color = opts.color;
+  if(opts.font != null) st.font = opts.font;
+  if(opts.bold != null) st.bold = !!opts.bold;
+  if(opts.italic != null) st.italic = !!opts.italic;
+  if(opts.text != null) h3.textContent = opts.text;
+
+  h3.style.fontSize = st.size + 'px';
+  h3.style.color = st.color;
+  h3.style.fontFamily = st.font;
+  h3.style.fontWeight = st.bold ? '700' : '400';
+  h3.style.fontStyle = st.italic ? 'italic' : 'normal';
+}
+
 
 
 // ============ KPI STRIP ============
@@ -710,8 +854,8 @@ function barChart(ctx, labels, datasets, opts={}){
       afterDatasetsDraw(chart){
         const {ctx} = chart; ctx.save();
         const fs = getChartLabelSize(chart, 10);
-        ctx.font = '600 ' + fs + 'px -apple-system, sans-serif';
-        ctx.fillStyle = dataLabelColor;
+        ctx.font = getChartLabelFontSpec(chart, '600', fs);
+        ctx.fillStyle = getChartLabelColor(chart);
         chart.data.datasets.forEach((ds, di)=>{
           if(ds.hidden) return;
           chart.getDatasetMeta(di).data.forEach((bar, i)=>{
@@ -767,9 +911,9 @@ function labeledBar(canvasId, labels, values, opts={}){
       afterDatasetsDraw(chart){
         const {ctx} = chart;
         ctx.save();
-        ctx.fillStyle = dataLabelColor;
+        ctx.fillStyle = getChartLabelColor(chart);
         const fs = getChartLabelSize(chart, 10.5);
-        ctx.font = '700 ' + fs + 'px -apple-system, sans-serif';
+        ctx.font = getChartLabelFontSpec(chart, '700', fs);
         chart.data.datasets[0].data.forEach((v,i)=>{
           const meta = chart.getDatasetMeta(0).data[i];
           if(v==null) return;
@@ -828,20 +972,20 @@ function productStackedBar(canvasId, labels, frequent, occasional, opts={}){
           const meta0 = chart.getDatasetMeta(0).data[i];
           const fs = getChartLabelSize(chart, 10.5);
           const fsIn = Math.max(8, fs - 1);
-          ctx.fillStyle = dataLabelColor;
-          ctx.font = '700 ' + fs + 'px -apple-system, sans-serif';
+          ctx.fillStyle = getChartLabelColor(chart);
+          ctx.font = getChartLabelFontSpec(chart, '700', fs);
           ctx.textAlign = 'left';
           ctx.textBaseline = 'middle';
           ctx.fillText(fmtPct(total, 1), meta1.x + 6, meta1.y);
           if(freq >= 12){
             ctx.fillStyle = '#fff';
-            ctx.font = '600 ' + fsIn + 'px -apple-system, sans-serif';
+            ctx.font = getChartLabelFontSpec(chart, '600', fsIn);
             ctx.textAlign = 'center';
             ctx.fillText(fmtPct(freq), meta0.base + (meta0.x - meta0.base) / 2, meta0.y);
           }
           if(occ >= 10){
             ctx.fillStyle = '#132625';
-            ctx.font = '600 ' + fsIn + 'px -apple-system, sans-serif';
+            ctx.font = getChartLabelFontSpec(chart, '600', fsIn);
             ctx.textAlign = 'center';
             ctx.fillText(fmtPct(occ), meta1.base + (meta1.x - meta1.base) / 2, meta1.y);
           }
@@ -888,8 +1032,8 @@ function groupedBar(canvasId, labels, series, opts={}){
       afterDatasetsDraw(chart){
         const {ctx}=chart; ctx.save();
         const fs = getChartLabelSize(chart, 8.5);
-        ctx.font='600 ' + fs + 'px -apple-system, sans-serif';
-        ctx.fillStyle=dataLabelColor;
+        ctx.font=getChartLabelFontSpec(chart, '600', fs);
+        ctx.fillStyle=getChartLabelColor(chart);
         ctx.textAlign='center'; ctx.textBaseline='bottom';
         chart.data.datasets.forEach((ds,di)=>{
           chart.getDatasetMeta(di).data.forEach((bar,i)=>{
@@ -936,7 +1080,7 @@ function donutChart(canvasId, labels, values, opts={}){
           const r = (arc.innerRadius + arc.outerRadius) / 2;
           ctx.fillStyle = '#fff';
           const fs = getChartLabelSize(chart, 11);
-          ctx.font = '700 ' + fs + 'px -apple-system, sans-serif';
+          ctx.font = getChartLabelFontSpec(chart, '700', fs);
           ctx.textAlign = 'center'; ctx.textBaseline = 'middle';
           ctx.fillText(fmtPct(pct, 1), arc.x + Math.cos(mid)*r, arc.y + Math.sin(mid)*r);
         });
@@ -970,8 +1114,8 @@ function compareBar(canvasId, labels, allVals, segVals, allLabel, segLabel){
       afterDatasetsDraw(chart){
         const {ctx}=chart; ctx.save();
         const fs = getChartLabelSize(chart, 9);
-        ctx.font='600 ' + fs + 'px -apple-system, sans-serif';
-        ctx.fillStyle=dataLabelColor;
+        ctx.font=getChartLabelFontSpec(chart, '600', fs);
+        ctx.fillStyle=getChartLabelColor(chart);
         ctx.textAlign='center'; ctx.textBaseline='bottom';
         chart.data.datasets.forEach((ds,di)=>{
           chart.getDatasetMeta(di).data.forEach((bar,i)=>{
@@ -1391,7 +1535,7 @@ RENDERERS.satisfaction = function(){
       {label:'Chăm sóc khách hàng', data:S.overall.sat_care, backgroundColor:GOLD, borderRadius:3},
     ]},
     plugins:[{id:'satLbl', afterDatasetsDraw(chart){
-      const {ctx}=chart; ctx.save(); const fs=getChartLabelSize(chart,9); ctx.font='600 '+fs+'px -apple-system,sans-serif'; ctx.fillStyle=dataLabelColor;
+      const {ctx}=chart; ctx.save(); const fs=getChartLabelSize(chart,9); ctx.font=getChartLabelFontSpec(chart,'600',fs); ctx.fillStyle=getChartLabelColor(chart);
       ctx.textAlign='center'; ctx.textBaseline='bottom';
       chart.data.datasets.forEach((ds,di)=>{ chart.getDatasetMeta(di).data.forEach((bar,i)=>{
         const v=ds.data[i]; if(v>=1) ctx.fillText(fmtPct(v), bar.x, bar.y-2);
@@ -1410,7 +1554,7 @@ RENDERERS.satisfaction = function(){
       data:[ +(u.n_unsat_product/u.n_total*100).toFixed(1), +(u.n_unsat_care/u.n_total*100).toFixed(1) ],
       backgroundColor:[NEG, '#D9906F'], borderRadius:6, barPercentage:0.55
     }]},
-    plugins:[{id:'vl', afterDatasetsDraw(ch){ const {ctx}=ch; ctx.save(); ctx.fillStyle=dataLabelColor; ctx.font='700 '+getChartLabelSize(ch,12)+'px sans-serif'; ctx.textAlign='center';
+    plugins:[{id:'vl', afterDatasetsDraw(ch){ const {ctx}=ch; ctx.save(); ctx.fillStyle=getChartLabelColor(ch); ctx.font=getChartLabelFontSpec(ch,'700',getChartLabelSize(ch,12)); ctx.textAlign='center';
       ch.getDatasetMeta(0).data.forEach((bar,i)=>{ const v=ch.data.datasets[0].data[i]; ctx.fillText(fmtPct(v), bar.x, bar.y-6); });
       ctx.restore(); }}],
     options:{ responsive:true, maintainAspectRatio:false, plugins:{legend:{display:false},
@@ -1461,7 +1605,7 @@ RENDERERS.satisfaction = function(){
         {label:'Rất quan tâm TS số', data: keys.map(k=>cryObj[k]), backgroundColor:GOLD, borderRadius:3},
       ]},
       plugins:[{id:'pctLbl', afterDatasetsDraw(chart){
-        const {ctx}=chart; ctx.save(); const fs=getChartLabelSize(chart,9); ctx.font='600 '+fs+'px -apple-system,sans-serif'; ctx.fillStyle=dataLabelColor;
+        const {ctx}=chart; ctx.save(); const fs=getChartLabelSize(chart,9); ctx.font=getChartLabelFontSpec(chart,'600',fs); ctx.fillStyle=getChartLabelColor(chart);
         ctx.textAlign='center'; ctx.textBaseline='bottom';
         chart.data.datasets.forEach((ds,di)=>{ chart.getDatasetMeta(di).data.forEach((bar,i)=>{
           const v=ds.data[i]; if(v!=null && v>=1) ctx.fillText(fmtPct(v), bar.x, bar.y-2);
@@ -1643,7 +1787,7 @@ RENDERERS.segments = function(){
         {label:'Rất quan tâm tài sản số', data:dig.crypto, backgroundColor:GOLD, borderRadius:3},
       ]},
       plugins:[{id:'pctLbl', afterDatasetsDraw(chart){
-      const {ctx}=chart; ctx.save(); const fs=getChartLabelSize(chart,9); ctx.font='600 '+fs+'px -apple-system,sans-serif'; ctx.fillStyle=dataLabelColor;
+      const {ctx}=chart; ctx.save(); const fs=getChartLabelSize(chart,9); ctx.font=getChartLabelFontSpec(chart,'600',fs); ctx.fillStyle=getChartLabelColor(chart);
       ctx.textAlign='center'; ctx.textBaseline='bottom';
       chart.data.datasets.forEach((ds,di)=>{ chart.getDatasetMeta(di).data.forEach((bar,i)=>{
         const v=ds.data[i]; if(v!=null && v>=1) ctx.fillText(fmtPct(v), bar.x, bar.y-2);
@@ -1661,7 +1805,7 @@ RENDERERS.segments = function(){
         {label:'Hiểu biết TC cao / rất cao', data:dig.high_lit, backgroundColor:TEAL_MID, borderRadius:3},
       ]},
       plugins:[{id:'pctLbl', afterDatasetsDraw(chart){
-      const {ctx}=chart; ctx.save(); const fs=getChartLabelSize(chart,9); ctx.font='600 '+fs+'px -apple-system,sans-serif'; ctx.fillStyle=dataLabelColor;
+      const {ctx}=chart; ctx.save(); const fs=getChartLabelSize(chart,9); ctx.font=getChartLabelFontSpec(chart,'600',fs); ctx.fillStyle=getChartLabelColor(chart);
       ctx.textAlign='center'; ctx.textBaseline='bottom';
       chart.data.datasets.forEach((ds,di)=>{ chart.getDatasetMeta(di).data.forEach((bar,i)=>{
         const v=ds.data[i]; if(v!=null && v>=1) ctx.fillText(fmtPct(v), bar.x, bar.y-2);
@@ -1686,7 +1830,7 @@ RENDERERS.segments = function(){
         {label:'Rất quan tâm tài sản số', data:DATA.cross_income_crypto.values, backgroundColor:GOLD, borderRadius:3},
       ]},
       plugins:[{id:'pctLbl', afterDatasetsDraw(chart){
-      const {ctx}=chart; ctx.save(); const fs=getChartLabelSize(chart,9); ctx.font='600 '+fs+'px -apple-system,sans-serif'; ctx.fillStyle=dataLabelColor;
+      const {ctx}=chart; ctx.save(); const fs=getChartLabelSize(chart,9); ctx.font=getChartLabelFontSpec(chart,'600',fs); ctx.fillStyle=getChartLabelColor(chart);
       ctx.textAlign='center'; ctx.textBaseline='bottom';
       chart.data.datasets.forEach((ds,di)=>{ chart.getDatasetMeta(di).data.forEach((bar,i)=>{
         const v=ds.data[i]; if(v!=null && v>=1) ctx.fillText(fmtPct(v), bar.x, bar.y-2);
@@ -1703,7 +1847,7 @@ RENDERERS.segments = function(){
         {label:'Hiểu biết TC "rất cao"', data:DATA.cross_income_selfliteracy_high.values, backgroundColor:TEAL_MID, borderRadius:3},
       ]},
       plugins:[{id:'pctLbl', afterDatasetsDraw(chart){
-      const {ctx}=chart; ctx.save(); const fs=getChartLabelSize(chart,9); ctx.font='600 '+fs+'px -apple-system,sans-serif'; ctx.fillStyle=dataLabelColor;
+      const {ctx}=chart; ctx.save(); const fs=getChartLabelSize(chart,9); ctx.font=getChartLabelFontSpec(chart,'600',fs); ctx.fillStyle=getChartLabelColor(chart);
       ctx.textAlign='center'; ctx.textBaseline='bottom';
       chart.data.datasets.forEach((ds,di)=>{ chart.getDatasetMeta(di).data.forEach((bar,i)=>{
         const v=ds.data[i]; if(v!=null && v>=1) ctx.fillText(fmtPct(v), bar.x, bar.y-2);
@@ -1981,12 +2125,20 @@ function downloadChartPng(canvasId, filename){
     const gap = 12 * scale;
 
     const probe = document.createElement('canvas').getContext('2d');
-    const titleFont = '700 ' + titleSize + 'px -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif';
+    // Lấy style tiêu đề từ h3 (nếu user đã chỉnh)
+    const h3el = card && card.querySelector('h3');
+    const tStyle = readTitleStyle(h3el);
+    const tSizePx = (tStyle.size || 13.5) * scale * (18/13.5); // scale tương đương titleSize cũ
+    const tWeight = tStyle.bold ? '700' : '400';
+    const tItalic = tStyle.italic ? 'italic ' : '';
+    const tFamily = tStyle.font || DEFAULT_FONT;
+    const tColor = tStyle.color || '#132625';
+    const titleFont = tItalic + tWeight + ' ' + tSizePx + 'px ' + tFamily;
     const subFont = '500 ' + subSize + 'px -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif';
     const titleLines = wrapText(probe, title, titleFont, chartW);
     const subLines = subtitle ? wrapText(probe, subtitle, subFont, chartW) : [];
     const headerH = padTop
-      + titleLines.length * (titleSize + 5 * scale)
+      + titleLines.length * (tSizePx + 5 * scale)
       + subLines.length * (subSize + 4 * scale)
       + 8 * scale
       + gap;
@@ -2006,12 +2158,12 @@ function downloadChartPng(canvasId, filename){
 
     let y = padTop;
     titleLines.forEach(ln=>{
-      ctx.fillStyle = '#132625';
+      ctx.fillStyle = tColor;
       ctx.font = titleFont;
       ctx.textAlign = 'left';
       ctx.textBaseline = 'top';
       ctx.fillText(ln, padX, y);
-      y += titleSize + 5 * scale;
+      y += tSizePx + 5 * scale;
     });
     subLines.forEach(ln=>{
       ctx.fillStyle = '#6B7C7A';
@@ -2113,6 +2265,154 @@ function downloadChartPng(canvasId, filename){
 }
 
 
+/** Xuất biểu đồ dạng SVG vector (dựa trên geometry Chart.js) */
+function downloadChartSvg(canvasId, filename){
+  const canvas = document.getElementById(canvasId);
+  if(!canvas){ alert('Không tìm thấy biểu đồ.'); return; }
+  const chart = (typeof Chart !== 'undefined' && Chart.getChart) ? Chart.getChart(canvas) : null;
+  if(!chart){ alert('Không có Chart instance.'); return; }
+
+  const card = canvas.closest('.card');
+  const title = card && card.querySelector('h3') ? card.querySelector('h3').textContent.trim() : (filename || canvasId || '');
+  const subtitle = card && card.querySelector('.card-sub') ? card.querySelector('.card-sub').textContent.trim() : '';
+
+  // Đồng bộ style đang chọn (cỡ/màu/font/đậm/nghiêng)
+  try{
+    applyChartTextStyle(chart, {
+      legendSize: chart.$legendFontSize,
+      labelSize: chart.$dlFontSize,
+      axisSize: chart.$axisFontSize,
+      legendColor: chart.$legendColor,
+      labelColor: chart.$dlColor,
+      axisColor: chart.$axisColor,
+      legendFont: chart.$legendFontFamily,
+      labelFont: chart.$dlFontFamily,
+      axisFont: chart.$axisFontFamily,
+      legendBold: chart.$legendBold,
+      labelBold: chart.$dlBold,
+      axisBold: chart.$axisBold,
+      legendItalic: chart.$legendItalic,
+      labelItalic: chart.$dlItalic,
+      axisItalic: chart.$axisItalic,
+    });
+  }catch(_){}
+
+  // Xuất SVG bằng snapshot canvas đang hiển thị → giống hệt dashboard
+  // (Chart.js vẽ trên canvas; reconstruct geometry luôn lệch font/legend/padding)
+  const PIXEL_RATIO = 2;
+  const cssW = canvas.clientWidth || Math.round(canvas.width / (chart.currentDevicePixelRatio || window.devicePixelRatio || 1));
+  const cssH = canvas.clientHeight || Math.round(canvas.height / (chart.currentDevicePixelRatio || window.devicePixelRatio || 1));
+
+  const orig = {
+    dprOpt: chart.options.devicePixelRatio,
+    styleW: canvas.style.width,
+    styleH: canvas.style.height,
+  };
+
+  function esc(s){
+    return String(s == null ? '' : s)
+      .replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;')
+      .replace(/"/g,'&quot;');
+  }
+  function wrapText(probeCtx, text, font, maxW){
+    probeCtx.font = font;
+    const words = String(text || '').split(/\s+/);
+    const lines = [];
+    let line = '';
+    words.forEach(w=>{
+      const test = line ? line + ' ' + w : w;
+      if(probeCtx.measureText(test).width > maxW && line){ lines.push(line); line = w; }
+      else line = test;
+    });
+    if(line) lines.push(line);
+    return lines.length ? lines : [text || ''];
+  }
+
+  try{
+    chart.options.devicePixelRatio = PIXEL_RATIO;
+    canvas.style.width = cssW + 'px';
+    canvas.style.height = cssH + 'px';
+    chart.resize();
+    chart.update('none');
+    chart.draw();
+
+    // Ẩn watermark overlay DOM (nếu có) — chỉ lấy đúng canvas chart
+    const pngData = canvas.toDataURL('image/png');
+
+    const scale = PIXEL_RATIO;
+    const h3el = card && card.querySelector('h3');
+    const tStyle = readTitleStyle(h3el);
+    const titleSize = tStyle.size || 15;
+    const subSize = 11;
+    const padX = 12;
+    const padTop = 10;
+    const gap = 10;
+    const probe = document.createElement('canvas').getContext('2d');
+    const tWeight = tStyle.bold ? '700' : '400';
+    const tItalicCss = tStyle.italic ? 'italic ' : '';
+    const tFamily = (tStyle.font || DEFAULT_FONT).replace(/'/g, '');
+    const tColor = tStyle.color || '#132625';
+    const titleFont = tItalicCss + tWeight + ' ' + titleSize + 'px ' + (tStyle.font || DEFAULT_FONT);
+    const subFont = '500 ' + subSize + 'px -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif';
+    const titleLines = title ? wrapText(probe, title, titleFont, cssW) : [];
+    const subLines = subtitle ? wrapText(probe, subtitle, subFont, cssW) : [];
+    const headerH = padTop
+      + titleLines.length * (titleSize + 4)
+      + subLines.length * (subSize + 3)
+      + (title ? 10 : 0)
+      + gap;
+
+    const totalW = cssW + padX * 2;
+    const totalH = cssH + headerH + 12;
+
+    // SVG: tiêu đề vector (theo style user) + ảnh chart giống dashboard
+    const parts = [];
+    parts.push('<?xml version="1.0" encoding="UTF-8"?>');
+    parts.push('<svg xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink" width="'+totalW+'" height="'+totalH+'" viewBox="0 0 '+totalW+' '+totalH+'">');
+    parts.push('<rect width="100%" height="100%" fill="#ffffff"/>');
+
+    let y = padTop + titleSize;
+    titleLines.forEach(ln=>{
+      parts.push('<text x="'+padX+'" y="'+y+'" font-family="'+esc(tFamily)+'" font-size="'+titleSize+'" font-weight="'+tWeight+'" font-style="'+(tStyle.italic?'italic':'normal')+'" fill="'+esc(tColor)+'">'+esc(ln)+'</text>');
+      y += titleSize + 4;
+    });
+    subLines.forEach(ln=>{
+      parts.push('<text x="'+padX+'" y="'+y+'" font-family="-apple-system, BlinkMacSystemFont, Segoe UI, Roboto, sans-serif" font-size="'+subSize+'" font-weight="500" fill="#6B7C7A">'+esc(ln)+'</text>');
+      y += subSize + 3;
+    });
+    if(title){
+      parts.push('<rect x="'+padX+'" y="'+(y+2)+'" width="48" height="3" fill="#FFC62F" rx="1"/>');
+      y += 10;
+    }
+    y += gap - 4;
+
+    // image: kích thước hiển thị = cssW x cssH, nguồn nét gấp PIXEL_RATIO
+    parts.push('<image x="'+padX+'" y="'+Math.round(y)+'" width="'+cssW+'" height="'+cssH+'" preserveAspectRatio="none" href="'+pngData+'" xlink:href="'+pngData+'"/>');
+    parts.push('</svg>');
+
+    const blob = new Blob([parts.join('\n')], {type: 'image/svg+xml;charset=utf-8'});
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    const safe = (filename || title || canvasId || 'bieu-do').replace(/[^\wÀ-ɏḀ-ỿ\- ]+/g,'').trim().slice(0,60) || canvasId;
+    a.href = url;
+    a.download = safe + '.svg';
+    document.body.appendChild(a); a.click(); a.remove();
+    setTimeout(()=>URL.revokeObjectURL(url), 2000);
+  }catch(err){
+    console.warn('SVG export failed', err);
+    alert('Xuất SVG thất bại: ' + (err && err.message ? err.message : err));
+  }finally{
+    try{
+      if(orig.dprOpt === undefined){ delete chart.options.devicePixelRatio; }
+      else { chart.options.devicePixelRatio = orig.dprOpt; }
+      canvas.style.width = orig.styleW || (cssW + 'px');
+      canvas.style.height = orig.styleH || (cssH + 'px');
+      chart.resize();
+      chart.update('none');
+    }catch(e){ console.warn('Restore after SVG export failed', e); }
+  }
+}
+
 function csvEscape(v){
   const s = (v==null?'':String(v));
   if(/[",\n\r]/.test(s)) return '"' + s.replace(/"/g,'""') + '"';
@@ -2184,10 +2484,22 @@ function attachDownloadButtons(root){
     bar.className = 'card-dl';
     bar.innerHTML = `
       <button type="button" class="dl-ico" title="Tải ảnh PNG" data-dl="png">📷</button>
+      <button type="button" class="dl-ico" title="Tải vector SVG" data-dl="svg">⧉</button>
       <button type="button" class="dl-ico gold" title="Tải dữ liệu CSV (Excel)" data-dl="csv">📊</button>
       <button type="button" class="dl-ico" title="Tùy chỉnh biểu đồ" data-dl="style">Aa</button>
       <div class="card-style" data-st-panel>
-        <div class="st-head">Cỡ chữ</div>
+        <div class="st-head">Tiêu đề biểu đồ</div>
+        <input type="text" class="st-title-input" data-st="title-text" placeholder="Tên biểu đồ…" title="Đổi tên tiêu đề"/>
+        <div class="st-row"><span class="lbl">Cỡ tiêu đề</span>
+          <button type="button" class="st-btn" data-st="title-minus">−</button>
+          <span class="st-val" data-st="title-val">13.5</span>
+          <button type="button" class="st-btn" data-st="title-plus">+</button></div>
+        <div class="st-row st-style-row"><span class="lbl">Tiêu đề</span>
+          <input type="color" class="st-color" data-st="title-color" value="#132625" title="Màu tiêu đề"/>
+          <select class="st-font" data-st="title-font" title="Font tiêu đề"></select>
+          <button type="button" class="st-bi on" data-st="title-bold" title="Đậm">B</button>
+          <button type="button" class="st-bi st-i" data-st="title-italic" title="Nghiêng">I</button></div>
+        <div class="st-sep">Cỡ chữ biểu đồ</div>
         <div class="st-row"><span class="lbl">Legend</span>
           <button type="button" class="st-btn" data-st="leg-minus">−</button>
           <span class="st-val" data-st="leg-val">${legSize}</span>
@@ -2200,6 +2512,22 @@ function attachDownloadButtons(root){
           <button type="button" class="st-btn" data-st="ax-minus">−</button>
           <span class="st-val" data-st="ax-val">${axSize}</span>
           <button type="button" class="st-btn" data-st="ax-plus">+</button></div>
+        <div class="st-sep">Màu &amp; Font chữ</div>
+        <div class="st-row st-style-row"><span class="lbl">Nhãn DL</span>
+          <input type="color" class="st-color" data-st="lab-color" value="#132625" title="Màu nhãn dữ liệu"/>
+          <select class="st-font" data-st="lab-font" title="Font nhãn dữ liệu"></select>
+          <button type="button" class="st-bi" data-st="lab-bold" title="Đậm">B</button>
+          <button type="button" class="st-bi st-i" data-st="lab-italic" title="Nghiêng">I</button></div>
+        <div class="st-row st-style-row"><span class="lbl">Legend</span>
+          <input type="color" class="st-color" data-st="leg-color" value="#5B6B6A" title="Màu legend"/>
+          <select class="st-font" data-st="leg-font" title="Font legend"></select>
+          <button type="button" class="st-bi" data-st="leg-bold" title="Đậm">B</button>
+          <button type="button" class="st-bi st-i" data-st="leg-italic" title="Nghiêng">I</button></div>
+        <div class="st-row st-style-row"><span class="lbl">Trục</span>
+          <input type="color" class="st-color" data-st="ax-color" value="#5B6B6A" title="Màu trục"/>
+          <select class="st-font" data-st="ax-font" title="Font trục"></select>
+          <button type="button" class="st-bi" data-st="ax-bold" title="Đậm">B</button>
+          <button type="button" class="st-bi st-i" data-st="ax-italic" title="Nghiêng">I</button></div>
         <div class="st-sep">Kích thước</div>
         <div class="st-row"><span class="lbl">Cao (px)</span>
           <button type="button" class="st-btn" data-st="h-minus">−</button>
@@ -2217,11 +2545,151 @@ function attachDownloadButtons(root){
       </div>`;
 
     bar.querySelector('[data-dl="png"]').onclick = (e)=>{ e.stopPropagation(); downloadChartPng(id, safe); };
+    bar.querySelector('[data-dl="svg"]').onclick = (e)=>{ e.stopPropagation(); downloadChartSvg(id, safe); };
     bar.querySelector('[data-dl="csv"]').onclick = (e)=>{ e.stopPropagation(); chartDataToCsv(id); };
 
     const styleBtn = bar.querySelector('[data-dl="style"]');
     const panel = bar.querySelector('[data-st-panel]');
     const filterArea = bar.querySelector('[data-st="filter-area"]');
+
+    // Populate font selects
+    function fillFontSelect(sel, current){
+      if(!sel) return;
+      sel.innerHTML = '';
+      CHART_FONT_OPTIONS.forEach(o=>{
+        const opt = document.createElement('option');
+        opt.value = o.v; opt.textContent = o.l;
+        if(current && current === o.v) opt.selected = true;
+        sel.appendChild(opt);
+      });
+      if(current && ![...sel.options].some(o=>o.value===current)){
+        const opt = document.createElement('option');
+        opt.value = current; opt.textContent = 'Tùy chỉnh'; opt.selected = true;
+        sel.appendChild(opt);
+      }
+    }
+    const chInit = getChart();
+    fillFontSelect(bar.querySelector('[data-st="lab-font"]'), chInit && chInit.$dlFontFamily);
+    fillFontSelect(bar.querySelector('[data-st="leg-font"]'), chInit && chInit.$legendFontFamily);
+    fillFontSelect(bar.querySelector('[data-st="ax-font"]'), chInit && chInit.$axisFontFamily);
+
+    // ---- Tiêu đề biểu đồ ----
+    const h3El = card.querySelector('h3');
+    const titleSt = readTitleStyle(h3El);
+    fillFontSelect(bar.querySelector('[data-st="title-font"]'), titleSt.font);
+    const titleInput = bar.querySelector('[data-st="title-text"]');
+    if(titleInput) titleInput.value = titleSt.text || '';
+    const titleValEl = bar.querySelector('[data-st="title-val"]');
+    if(titleValEl) titleValEl.textContent = titleSt.size;
+    try{
+      const tc = bar.querySelector('[data-st="title-color"]');
+      if(tc && titleSt.color){
+        // convert rgb() to hex if needed
+        let col = titleSt.color;
+        if(col.startsWith('rgb')){
+          const m = col.match(/\d+/g);
+          if(m && m.length >= 3){
+            col = '#' + m.slice(0,3).map(n => ('0'+Number(n).toString(16)).slice(-2)).join('');
+          }
+        }
+        if(/^#[0-9A-Fa-f]{6}/.test(col)) tc.value = col.slice(0,7);
+      }
+      const tb = bar.querySelector('[data-st="title-bold"]');
+      const ti = bar.querySelector('[data-st="title-italic"]');
+      if(tb) tb.classList.toggle('on', !!titleSt.bold);
+      if(ti) ti.classList.toggle('on', !!titleSt.italic);
+    }catch(_){}
+
+    function bumpTitleSize(delta){
+      if(!h3El) return;
+      const cur = readTitleStyle(h3El);
+      const next = Math.max(10, Math.min(28, Math.round((cur.size + delta) * 2) / 2));
+      applyCardTitleStyle(h3El, { size: next });
+      if(titleValEl) titleValEl.textContent = next;
+    }
+    bar.querySelector('[data-st="title-minus"]').onclick = (e)=>{ e.stopPropagation(); bumpTitleSize(-0.5); };
+    bar.querySelector('[data-st="title-plus"]').onclick = (e)=>{ e.stopPropagation(); bumpTitleSize(0.5); };
+    if(titleInput){
+      titleInput.addEventListener('click', e => e.stopPropagation());
+      titleInput.addEventListener('input', e=>{
+        e.stopPropagation();
+        if(h3El) applyCardTitleStyle(h3El, { text: titleInput.value });
+      });
+    }
+    bar.querySelector('[data-st="title-color"]').oninput = (e)=>{
+      e.stopPropagation();
+      if(h3El) applyCardTitleStyle(h3El, { color: e.target.value });
+    };
+    bar.querySelector('[data-st="title-font"]').onchange = (e)=>{
+      e.stopPropagation();
+      if(h3El) applyCardTitleStyle(h3El, { font: e.target.value });
+    };
+    (function wireTitleBI(){
+      const tb = bar.querySelector('[data-st="title-bold"]');
+      const ti = bar.querySelector('[data-st="title-italic"]');
+      if(tb) tb.onclick = (e)=>{
+        e.stopPropagation();
+        const on = !tb.classList.contains('on');
+        tb.classList.toggle('on', on);
+        if(h3El) applyCardTitleStyle(h3El, { bold: on });
+      };
+      if(ti) ti.onclick = (e)=>{
+        e.stopPropagation();
+        const on = !ti.classList.contains('on');
+        ti.classList.toggle('on', on);
+        if(h3El) applyCardTitleStyle(h3El, { italic: on });
+      };
+    })();
+
+    try{
+      if(chInit && chInit.$dlColor) bar.querySelector('[data-st="lab-color"]').value = chInit.$dlColor.slice(0,7);
+      if(chInit && chInit.$legendColor) bar.querySelector('[data-st="leg-color"]').value = chInit.$legendColor.slice(0,7);
+      if(chInit && chInit.$axisColor) bar.querySelector('[data-st="ax-color"]').value = chInit.$axisColor.slice(0,7);
+    }catch(_){}
+
+    function applyColorFont(kind, prop, value){
+      const c = getChart();
+      if(!c) return;
+      const payload = {};
+      if(kind==='lab' && prop==='color') payload.labelColor = value;
+      if(kind==='lab' && prop==='font') payload.labelFont = value;
+      if(kind==='lab' && prop==='bold') payload.labelBold = value;
+      if(kind==='lab' && prop==='italic') payload.labelItalic = value;
+      if(kind==='leg' && prop==='color') payload.legendColor = value;
+      if(kind==='leg' && prop==='font') payload.legendFont = value;
+      if(kind==='leg' && prop==='bold') payload.legendBold = value;
+      if(kind==='leg' && prop==='italic') payload.legendItalic = value;
+      if(kind==='ax' && prop==='color') payload.axisColor = value;
+      if(kind==='ax' && prop==='font') payload.axisFont = value;
+      if(kind==='ax' && prop==='bold') payload.axisBold = value;
+      if(kind==='ax' && prop==='italic') payload.axisItalic = value;
+      applyChartTextStyle(c, payload);
+    }
+    bar.querySelector('[data-st="lab-color"]').oninput = (e)=> applyColorFont('lab','color', e.target.value);
+    bar.querySelector('[data-st="leg-color"]').oninput = (e)=> applyColorFont('leg','color', e.target.value);
+    bar.querySelector('[data-st="ax-color"]').oninput = (e)=> applyColorFont('ax','color', e.target.value);
+    bar.querySelector('[data-st="lab-font"]').onchange = (e)=> applyColorFont('lab','font', e.target.value);
+    bar.querySelector('[data-st="leg-font"]').onchange = (e)=> applyColorFont('leg','font', e.target.value);
+    bar.querySelector('[data-st="ax-font"]').onchange = (e)=> applyColorFont('ax','font', e.target.value);
+
+    function wireBI(kind, prop, key){
+      const btn = bar.querySelector('[data-st="'+kind+'-'+prop+'"]');
+      if(!btn) return;
+      // init state
+      if(chInit && chInit[key]) btn.classList.add('on');
+      btn.onclick = (e)=>{
+        e.stopPropagation();
+        const on = !btn.classList.contains('on');
+        btn.classList.toggle('on', on);
+        applyColorFont(kind, prop, on);
+      };
+    }
+    wireBI('lab','bold','$dlBold');
+    wireBI('lab','italic','$dlItalic');
+    wireBI('leg','bold','$legendBold');
+    wireBI('leg','italic','$legendItalic');
+    wireBI('ax','bold','$axisBold');
+    wireBI('ax','italic','$axisItalic');
 
     function ensureOrig(ch){
       if(!ch || ch.$origSnap) return;
